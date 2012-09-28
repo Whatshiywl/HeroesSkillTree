@@ -3,3 +3,6 @@ main: me.Whatshiywl.heroesskilltree.HeroesSkillTree
 version: 0.1
 description: >
              Brings skill trees to the Heroes plugin.
+commands:
+  skillup:
+  skilldown:

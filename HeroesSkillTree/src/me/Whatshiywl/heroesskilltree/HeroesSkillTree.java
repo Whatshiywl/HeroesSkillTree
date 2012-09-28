@@ -9,6 +9,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
+import org.bukkit.command.Command;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -28,7 +30,6 @@ public class HeroesSkillTree extends JavaPlugin {
     public final EventListener HEventListener = new EventListener(this);
 	public Boolean hasHeroes;
 	public Map<Player, Integer> Points = new HashMap<Player, Integer>();
-	public Map<Skill, Integer> SkillLevel = new HashMap<Skill, Integer>();
 	public FileConfiguration config;
 	private FileConfiguration playerConfig = null;
 	private File playerConfigFile = null;
@@ -39,6 +40,7 @@ public class HeroesSkillTree extends JavaPlugin {
 	{
 		PluginDescriptionFile pdfFile = this.getDescription();
 		this.logger.info(pdfFile.getName() + " Has Been Disabled!");
+		savePlayerConfig();
 	}
 	
 	@Override	
@@ -57,6 +59,56 @@ public class HeroesSkillTree extends JavaPlugin {
 		{
 			pm.registerEvents(this.HEventListener, this);
 		}
+	}
+
+	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
+
+		final Heroes heros = (Heroes)plugin.getServer().getPluginManager().getPlugin("Heroes");
+		if(sender instanceof Player){
+			Player player = (Player) sender;
+			Hero hero = heros.getCharacterManager().getHero(player);
+			if(commandLabel.equalsIgnoreCase("skillup"))
+			{
+				if(args.length > 0){
+					if(hero.hasAccessToSkill(args[0])){
+						int i;
+						if(args.length > 1){
+							i = Integer.parseInt(args[1]);
+						}
+						else{
+							i = 1;
+						}
+						Skill skill = heroes.getSkillManager().getSkill(args[0]);
+						setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
+						savePlayerConfig();
+					}
+				}
+				else{
+					player.sendMessage("No skill given");
+				}
+			}
+			else if(commandLabel.equalsIgnoreCase("skilldown"))
+			{
+				if(args.length > 0){
+					if(hero.hasAccessToSkill(args[0])){
+						int i;
+						if(args.length > 1){
+							i = Integer.parseInt(args[1]);
+						}
+						else{
+							i = 1;
+						}
+						Skill skill = heroes.getSkillManager().getSkill(args[0]);
+						setSkillLevel(hero, skill, getSkillLevel(hero, skill) - i);
+						savePlayerConfig();
+					}
+				}
+				else{
+					player.sendMessage("No skill given");
+				}
+			}
+		}
+		return false;
 	}
 
 	public ConfigurationSection loadPlayer(Player player){
@@ -88,14 +140,22 @@ public class HeroesSkillTree extends JavaPlugin {
 	}
 	
 	public void savePlayer(Player player){
-		player.sendMessage("savePlayer()");		
+		Hero hero = heroes.getCharacterManager().getHero(player);
 		getPlayerConfig().getConfigurationSection(player.getName()).set("Points", Points.get(player));
+		for(Skill skill : heroes.getSkillManager().getSkills()){
+			if(hero.hasAccessToSkill(skill)){
+				
+			}
+		}
 		savePlayerConfig();
 	}
 	
-	public static int getSkillLevel(Hero hero, Skill skill){
-		hero.getSkillSettings(skill);
-		return 0;
+	public int getSkillLevel(Hero hero, Skill skill){
+		return getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).getInt(skill.getName());
+	}
+	
+	public void setSkillLevel(Hero hero, Skill skill, int i){
+		getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).set(skill.getName(), i);
 	}
 	
 	public void reloadPlayerConfig() {
