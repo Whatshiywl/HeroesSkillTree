@@ -17,9 +17,11 @@ Havn't been tested with multiple players yet, tho.
 /skillup (skill) [amount] and /skilldown (skill) [amount] to
 change skill levels.
 SkillPoints are now properly used.
+Skills now "master" at "max-level" defined on Heroes/classes/class.yml
+just like classes do.
 
 TODO:
                     BASIC PACKAGE:
-- Make skills cap at max-level node defined on Heroes/classes/class.yml
 - Make skills recognize their parents from Heroes/classes/class.yml
 - Use parenting system to cancel skills whenever needed
+- Create permission nodes for /skillup and /skilldown

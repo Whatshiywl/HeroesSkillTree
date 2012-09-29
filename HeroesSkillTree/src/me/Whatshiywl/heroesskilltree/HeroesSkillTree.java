@@ -20,6 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import com.herocraftonline.heroes.Heroes;
 import com.herocraftonline.heroes.characters.Hero;
 import com.herocraftonline.heroes.characters.skill.Skill;
+import com.herocraftonline.heroes.characters.skill.SkillConfigManager;
 
 public class HeroesSkillTree extends JavaPlugin {
 	
@@ -73,9 +74,13 @@ public class HeroesSkillTree extends JavaPlugin {
 						if(args.length > 1) i = Integer.parseInt(args[1]);
 						else i = 1;
 						if(getPlayerPoints(hero) >= i){
-							setPlayerPoints(hero, getPlayerPoints(hero) - i);
-							setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
-							savePlayerConfig();
+							if(getSkillMaxLevel(hero, skill) >= getSkillLevel(hero, skill) + i)
+							{
+								setPlayerPoints(hero, getPlayerPoints(hero) - i);
+								setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
+								savePlayerConfig();
+							}
+							else player.sendMessage("This skill is already mastered");
 						}
 						else player.sendMessage("You don't have enough SkillPoints");
 					}
@@ -95,9 +100,12 @@ public class HeroesSkillTree extends JavaPlugin {
 						if(args.length > 1) i = Integer.parseInt(args[1]);
 						else i = 1;
 						if(getSkillLevel(hero, skill) >= i){
-							setPlayerPoints(hero, getPlayerPoints(hero) + i);
-							setSkillLevel(hero, skill, getSkillLevel(hero, skill) - i);
-							savePlayerConfig();
+							//if(getSkillLevel(hero, skill) - i >= 1){ //Won't allow players to re-lock skills 
+								setPlayerPoints(hero, getPlayerPoints(hero) + i);
+								setSkillLevel(hero, skill, getSkillLevel(hero, skill) - i);
+								savePlayerConfig();
+							//}
+							//else player.sendMessage("This skill is already locked");
 						}
 						else player.sendMessage("This skill is not a high enough level");
 					}
@@ -163,6 +171,10 @@ public class HeroesSkillTree extends JavaPlugin {
 	
 	public void setSkillLevel(Hero hero, Skill skill, int i){
 		getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).set(skill.getName(), i);
+	}
+	
+	public int getSkillMaxLevel(Hero hero, Skill skill){
+		return (int) SkillConfigManager.getUseSetting(hero, skill, "max-level", 1, false);
 	}
 	
 	public void reloadPlayerConfig() {
