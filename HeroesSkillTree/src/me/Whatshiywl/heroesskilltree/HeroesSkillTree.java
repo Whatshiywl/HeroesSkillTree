@@ -3,8 +3,6 @@ package me.Whatshiywl.heroesskilltree;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -29,7 +27,6 @@ public class HeroesSkillTree extends JavaPlugin {
 	public HeroesSkillTree plugin;
     public final EventListener HEventListener = new EventListener(this);
 	public Boolean hasHeroes;
-	public Map<Player, Integer> Points = new HashMap<Player, Integer>();
 	public FileConfiguration config;
 	private FileConfiguration playerConfig = null;
 	private File playerConfigFile = null;
@@ -63,25 +60,27 @@ public class HeroesSkillTree extends JavaPlugin {
 
 	public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
 
-		final Heroes heros = (Heroes)plugin.getServer().getPluginManager().getPlugin("Heroes");
+		final Heroes heroes = (Heroes)plugin.getServer().getPluginManager().getPlugin("Heroes");
 		if(sender instanceof Player){
 			Player player = (Player) sender;
-			Hero hero = heros.getCharacterManager().getHero(player);
+			Hero hero = heroes.getCharacterManager().getHero(player);
 			if(commandLabel.equalsIgnoreCase("skillup"))
 			{
 				if(args.length > 0){
+					Skill skill = heroes.getSkillManager().getSkill(args[0]);
 					if(hero.hasAccessToSkill(args[0])){
 						int i;
-						if(args.length > 1){
-							i = Integer.parseInt(args[1]);
+						if(args.length > 1) i = Integer.parseInt(args[1]);
+						else i = 1;
+						if(getPlayerPoints(hero) >= i){
+							setPlayerPoints(hero, getPlayerPoints(hero) - i);
+							setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
+							savePlayerConfig();
 						}
-						else{
-							i = 1;
-						}
-						Skill skill = heroes.getSkillManager().getSkill(args[0]);
-						setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
-						savePlayerConfig();
+						else player.sendMessage("You don't have enough SkillPoints");
 					}
+					else if(heroes.getSkillManager().getSkills().contains(skill)) player.sendMessage("You don't have this skill");
+					else player.sendMessage("This skill doesn't exist");
 				}
 				else{
 					player.sendMessage("No skill given");
@@ -90,18 +89,20 @@ public class HeroesSkillTree extends JavaPlugin {
 			else if(commandLabel.equalsIgnoreCase("skilldown"))
 			{
 				if(args.length > 0){
+					Skill skill = heroes.getSkillManager().getSkill(args[0]);
 					if(hero.hasAccessToSkill(args[0])){
 						int i;
-						if(args.length > 1){
-							i = Integer.parseInt(args[1]);
+						if(args.length > 1) i = Integer.parseInt(args[1]);
+						else i = 1;
+						if(getSkillLevel(hero, skill) >= i){
+							setPlayerPoints(hero, getPlayerPoints(hero) + i);
+							setSkillLevel(hero, skill, getSkillLevel(hero, skill) - i);
+							savePlayerConfig();
 						}
-						else{
-							i = 1;
-						}
-						Skill skill = heroes.getSkillManager().getSkill(args[0]);
-						setSkillLevel(hero, skill, getSkillLevel(hero, skill) - i);
-						savePlayerConfig();
+						else player.sendMessage("This skill is not a high enough level");
 					}
+					else if(heroes.getSkillManager().getSkills().contains(skill)) player.sendMessage("You don't have this skill");
+					else player.sendMessage("This skill doesn't exist");
 				}
 				else{
 					player.sendMessage("No skill given");
@@ -134,20 +135,26 @@ public class HeroesSkillTree extends JavaPlugin {
 				}
 			}
 		}
-		
-		Points.put(player, getPlayerConfig().getConfigurationSection(player.getName()).getInt("Points"));
 		return getPlayerConfig().getConfigurationSection(player.getName());
 	}
 	
 	public void savePlayer(Player player){
 		Hero hero = heroes.getCharacterManager().getHero(player);
-		getPlayerConfig().getConfigurationSection(player.getName()).set("Points", Points.get(player));
+		setPlayerPoints(hero, getPlayerPoints(hero));
 		for(Skill skill : heroes.getSkillManager().getSkills()){
 			if(hero.hasAccessToSkill(skill)){
 				
 			}
 		}
 		savePlayerConfig();
+	}
+	
+	public int getPlayerPoints(Hero hero){
+		return getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).getInt("Points");
+	}
+	
+	public void setPlayerPoints(Hero hero, int i){
+		getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).set("Points", i);
 	}
 	
 	public int getSkillLevel(Hero hero, Skill skill){

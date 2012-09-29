@@ -16,9 +16,10 @@ It also stores skill levels for on individual player.
 Havn't been tested with multiple players yet, tho.
 /skillup (skill) [amount] and /skilldown (skill) [amount] to
 change skill levels.
+SkillPoints are now properly used.
 
 TODO:
                     BASIC PACKAGE:
-- Make /skillup and /skilldown require and take SkillPoints
+- Make skills cap at max-level node defined on Heroes/classes/class.yml
 - Make skills recognize their parents from Heroes/classes/class.yml
 - Use parenting system to cancel skills whenever needed
