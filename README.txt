@@ -19,6 +19,7 @@ change skill levels.
 SkillPoints are now properly used.
 Skills now "master" at "max-level" defined on Heroes/classes/class.yml
 just like classes do.
+Skills can already have parents set for them but they still do nothing.
 
 TODO:
                     BASIC PACKAGE:

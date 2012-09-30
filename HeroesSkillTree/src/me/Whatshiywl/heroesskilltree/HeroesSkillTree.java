@@ -3,6 +3,8 @@ package me.Whatshiywl.heroesskilltree;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -19,6 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import com.herocraftonline.heroes.Heroes;
 import com.herocraftonline.heroes.characters.Hero;
+import com.herocraftonline.heroes.characters.classes.HeroClass;
 import com.herocraftonline.heroes.characters.skill.Skill;
 import com.herocraftonline.heroes.characters.skill.SkillConfigManager;
 
@@ -31,7 +34,11 @@ public class HeroesSkillTree extends JavaPlugin {
 	public FileConfiguration config;
 	private FileConfiguration playerConfig = null;
 	private File playerConfigFile = null;
+	private FileConfiguration heroesClassConfig = null;
+	private File heroesClassConfigFile = null;
 	public Heroes heroes = (Heroes)Bukkit.getServer().getPluginManager().getPlugin("Heroes");
+	public List<Skill> SkillStrongParents = new ArrayList<Skill>();
+	public List<Skill> SkillWeakParents = new ArrayList<Skill>();
 	
 	@Override
 	public void onDisable() 
@@ -74,11 +81,20 @@ public class HeroesSkillTree extends JavaPlugin {
 						if(args.length > 1) i = Integer.parseInt(args[1]);
 						else i = 1;
 						if(getPlayerPoints(hero) >= i){
-							if(getSkillMaxLevel(hero, skill) >= getSkillLevel(hero, skill) + i)
-							{
-								setPlayerPoints(hero, getPlayerPoints(hero) - i);
-								setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
-								savePlayerConfig();
+							if(getSkillMaxLevel(hero, skill) >= getSkillLevel(hero, skill) + i){
+								if(isLocked(hero, skill)){
+									if(canUnlock(hero, skill)){
+										setPlayerPoints(hero, getPlayerPoints(hero) - i);
+										setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
+										savePlayerConfig();
+									}
+									else player.sendMessage("You can't unlock this skill!");
+								}
+								else{
+									setPlayerPoints(hero, getPlayerPoints(hero) - i);
+									setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
+									savePlayerConfig();
+								}
 							}
 							else player.sendMessage("This skill is already mastered");
 						}
@@ -114,6 +130,11 @@ public class HeroesSkillTree extends JavaPlugin {
 				}
 				else{
 					player.sendMessage("No skill given");
+				}
+			}
+			else if(commandLabel.equalsIgnoreCase("parents")){
+				if(args.length > 0){
+					player.sendMessage(getStrongParentSkills(hero, heroes.getSkillManager().getSkill(args[0])).toString());
 				}
 			}
 		}
@@ -177,6 +198,38 @@ public class HeroesSkillTree extends JavaPlugin {
 		return (int) SkillConfigManager.getUseSetting(hero, skill, "max-level", 1, false);
 	}
 	
+	public List<String> getStrongParentSkills(Hero hero, Skill skill){
+		if((getHeroesClassConfig(hero.getHeroClass()).getConfigurationSection("permitted-skills." + skill.getName()).contains("parents")) &&
+			(getHeroesClassConfig(hero.getHeroClass()).getConfigurationSection("permitted-skills." + skill.getName() + ".parents").contains("strong"))){
+				return getHeroesClassConfig(hero.getHeroClass()).
+						getConfigurationSection("permitted-skills." + skill.getName() + ".parents").getStringList("strong");
+		}
+		else return null;
+	}
+	
+	public List<String> getWeakParentSkills(Hero hero, Skill skill){
+		if((getHeroesClassConfig(hero.getHeroClass()).getConfigurationSection("permitted-skills." + skill.getName()).contains("parents")) &&
+			(getHeroesClassConfig(hero.getHeroClass()).getConfigurationSection("permitted-skills." + skill.getName() + ".parents").contains("weak"))){
+				return getHeroesClassConfig(hero.getHeroClass()).
+						getConfigurationSection("permitted-skills." + skill.getName() + ".parents").getStringList("weak");
+		}
+		else return null;
+	}
+	
+	public boolean isLocked(Hero hero, Skill skill){ if(hero.hasAccessToSkill(skill)) return (getSkillLevel(hero, skill) <= 0); return true;}
+	
+	public boolean isMastered(Hero hero, Skill skill){ if(hero.hasAccessToSkill(skill)) return (getSkillLevel(hero, skill) >= getSkillMaxLevel(hero, skill)); return false;}
+	
+	public boolean canUnlock(Hero hero, Skill skill){
+		if(hero.hasAccessToSkill(skill) && (hero.canUseSkill(skill))){
+			if(getStrongParentSkills(hero, skill) != null) 
+				for(String name : getStrongParentSkills(hero, skill)) if(!isMastered(hero, heroes.getSkillManager().getSkill(name))) return false;
+			if(getWeakParentSkills(hero, skill) != null) 
+				for(String name : getWeakParentSkills(hero, skill)) if(isMastered(hero, heroes.getSkillManager().getSkill(name))) return true;
+		}
+		return false;
+	}
+	
 	public void reloadPlayerConfig() {
 	    if (playerConfigFile == null) {
 	    	playerConfigFile = new File(getDataFolder(), "players.yml");
@@ -207,5 +260,19 @@ public class HeroesSkillTree extends JavaPlugin {
 	    } catch (IOException ex) {
 	        this.getLogger().log(Level.SEVERE, "Could not save config to " + playerConfigFile, ex);
 	    }
+	}
+
+	public void reloadHeroesClassConfig(HeroClass HClass) {
+	    if (heroesClassConfigFile == null) {
+	    	heroesClassConfigFile = new File(heroes.getDataFolder() + "/classes", HClass.getName() + ".yml");
+	    }
+	    heroesClassConfig = YamlConfiguration.loadConfiguration(heroesClassConfigFile);
+	}
+	
+	public FileConfiguration getHeroesClassConfig(HeroClass HClass) {
+	    if (heroesClassConfig == null) {
+	        this.reloadHeroesClassConfig(HClass);
+	    }
+	    return heroesClassConfig;
 	}
 }

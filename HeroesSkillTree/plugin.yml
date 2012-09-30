@@ -6,3 +6,4 @@ description: >
 commands:
   skillup:
   skilldown:
+  parents:
