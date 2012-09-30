@@ -222,10 +222,16 @@ public class HeroesSkillTree extends JavaPlugin {
 	
 	public boolean canUnlock(Hero hero, Skill skill){
 		if(hero.hasAccessToSkill(skill) && (hero.canUseSkill(skill))){
-			if(getStrongParentSkills(hero, skill) != null) 
-				for(String name : getStrongParentSkills(hero, skill)) if(!isMastered(hero, heroes.getSkillManager().getSkill(name))) return false;
-			if(getWeakParentSkills(hero, skill) != null) 
-				for(String name : getWeakParentSkills(hero, skill)) if(isMastered(hero, heroes.getSkillManager().getSkill(name))) return true;
+			if(getStrongParentSkills(hero, skill) == null && getWeakParentSkills(hero, skill) == null) return true;
+			else{
+				if(getStrongParentSkills(hero, skill) != null){
+					for(String name : getStrongParentSkills(hero, skill)){ if(!isMastered(hero, heroes.getSkillManager().getSkill(name))) return false;}
+					if(getWeakParentSkills(hero, skill) == null) return true;
+				}
+				if(getWeakParentSkills(hero, skill) != null){ 
+					for(String name : getWeakParentSkills(hero, skill)) if(isMastered(hero, heroes.getSkillManager().getSkill(name)))return true;
+				}
+			}
 		}
 		return false;
 	}

@@ -26,6 +26,7 @@ public class EventListener implements Listener
 		plugin.savePlayer(player);
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
+				hero.getPlayer().sendMessage("Removing Effect");
 				hero.removeEffect(hero.getEffect(skill.getName()));
 			}
 		}
@@ -40,6 +41,7 @@ public class EventListener implements Listener
 		}
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
+				hero.getPlayer().sendMessage("Removing Effect");
 				hero.removeEffect(hero.getEffect(skill.getName()));
 			}
 		}
@@ -53,6 +55,7 @@ public class EventListener implements Listener
 		plugin.savePlayer(hero.getPlayer());
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
+				hero.getPlayer().sendMessage("Removing Effect");
 				hero.removeEffect(hero.getEffect(skill.getName()));
 			}
 		}
@@ -64,6 +67,7 @@ public class EventListener implements Listener
 		Hero hero = event.getHero();
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
+				hero.getPlayer().sendMessage("Removing Effect");
 				hero.removeEffect(hero.getEffect(skill.getName()));
 			}
 		}
@@ -72,9 +76,9 @@ public class EventListener implements Listener
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerUseSkill(SkillUseEvent event){
 		if(plugin.isLocked(event.getHero(), event.getSkill())){
-			event.setCancelled(true);
 			event.getPlayer().sendMessage("This skill is still locked!");
 			event.getHero().hasEffect(event.getSkill().getName());
+			event.setCancelled(true);
 		}
 	}
 	
