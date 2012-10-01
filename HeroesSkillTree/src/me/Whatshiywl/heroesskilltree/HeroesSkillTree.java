@@ -183,7 +183,7 @@ public class HeroesSkillTree extends JavaPlugin {
 				if(player.hasPermission("skilltree.points")) player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "You currently have " + getPlayerPoints(hero) + " SkillPoints.");
 				else player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
 			}
-			
+			//player
 			//SKILLADMIN
 			else if(commandLabel.equalsIgnoreCase("skilladmin")){
 				if(args.length > 0){
@@ -274,7 +274,14 @@ public class HeroesSkillTree extends JavaPlugin {
 
 		if(!getPlayerConfig().getConfigurationSection(player.getName()).contains("Points")){
 			//Creates point recorder for player
+			int i = 0;
+			for(HeroClass heroClass : heroes.getClassManager().getClasses()){
+				if(hero.getLevel(heroClass) > 0){
+					i += hero.getLevel(heroClass);
+				}
+			}
 			getPlayerConfig().getConfigurationSection(player.getName()).createSection("Points");
+			getPlayerConfig().getConfigurationSection(player.getName()).set("Points", i);
 			savePlayerConfig();
 		}
 		
