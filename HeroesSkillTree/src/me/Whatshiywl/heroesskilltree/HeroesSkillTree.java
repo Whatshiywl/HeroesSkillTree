@@ -271,10 +271,10 @@ public class HeroesSkillTree extends JavaPlugin {
 			getPlayerConfig().createSection(player.getName());
 		}
 
-		if(!getPlayerConfig().getConfigurationSection(player.getName()).contains("Points")){
+		if(!getPlayerConfig().getConfigurationSection(player.getName()).contains(hero.getHeroClass().getName())){
 			//Creates point recorder for player
-			getPlayerConfig().getConfigurationSection(player.getName()).createSection("Points");
-			getPlayerConfig().getConfigurationSection(player.getName()).set("Points", hero.getLevel());
+			getPlayerConfig().getConfigurationSection(player.getName()).createSection(hero.getHeroClass().getName());
+			getPlayerConfig().getConfigurationSection(player.getName()).set(hero.getHeroClass().getName(), hero.getLevel());
 		}
 		
 		for(Skill skill : heroes.getSkillManager().getSkills()){
@@ -291,11 +291,14 @@ public class HeroesSkillTree extends JavaPlugin {
 	
 	public void recalcPlayer(Player player, HeroClass heroclass){
 		Hero hero = heroes.getCharacterManager().getHero(player);
-		int i = 0;
-		for(Skill skill : heroes.getSkillManager().getSkills()) if(heroclass.hasSkill(skill.getName())){
-			i += getSkillLevel(hero, skill);
+		if(getPlayerConfig().getConfigurationSection(player.getName()).contains(heroclass.getName())){
+			int i = 0;
+			for(Skill skill : heroes.getSkillManager().getSkills()) if(heroclass.hasSkill(skill.getName())){
+				i += getSkillLevel(hero, skill);
+			}
+			loadPlayer(player).set(heroclass.getName(), hero.getLevel(heroclass) - i);
 		}
-		loadPlayer(player).set("Points", hero.getLevel(heroclass) - i);
+		else loadPlayer(player).set(heroclass.getName(), 0);
 		savePlayerConfig();
 	}
 	
@@ -324,11 +327,11 @@ public class HeroesSkillTree extends JavaPlugin {
 	}
 	
 	public int getPlayerPoints(Hero hero){
-		return loadPlayer(hero.getPlayer()).getInt("Points");
+		return loadPlayer(hero.getPlayer()).getInt(hero.getHeroClass().getName());
 	}
 	
 	public void setPlayerPoints(Hero hero, int i){
-		loadPlayer(hero.getPlayer()).set("Points", i);
+		loadPlayer(hero.getPlayer()).set(hero.getHeroClass().getName(), i);
 		savePlayerConfig();
 	}
 	
