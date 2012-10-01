@@ -269,14 +269,12 @@ public class HeroesSkillTree extends JavaPlugin {
 		if(!getPlayerConfig().contains(player.getName())){
 			//Creates new player section
 			getPlayerConfig().createSection(player.getName());
-			savePlayerConfig();
 		}
 
 		if(!getPlayerConfig().getConfigurationSection(player.getName()).contains("Points")){
 			//Creates point recorder for player
 			getPlayerConfig().getConfigurationSection(player.getName()).createSection("Points");
-			getPlayerConfig().getConfigurationSection(player.getName()).set("Points", hero.getTieredLevel(false));
-			savePlayerConfig();
+			getPlayerConfig().getConfigurationSection(player.getName()).set("Points", hero.getLevel());
 		}
 		
 		for(Skill skill : heroes.getSkillManager().getSkills()){
@@ -284,11 +282,21 @@ public class HeroesSkillTree extends JavaPlugin {
 				if(!getPlayerConfig().getConfigurationSection(player.getName()).contains(skill.getName())){
 					//Creates new skills to player's section
 					getPlayerConfig().getConfigurationSection(player.getName()).set(skill.getName(), 0);
-					savePlayerConfig();
 				}
 			}
 		}
+		savePlayerConfig();
 		return getPlayerConfig().getConfigurationSection(player.getName());
+	}
+	
+	public void recalcPlayer(Player player, HeroClass heroclass){
+		Hero hero = heroes.getCharacterManager().getHero(player);
+		int i = 0;
+		for(Skill skill : heroes.getSkillManager().getSkills()) if(heroclass.hasSkill(skill.getName())){
+			i += getSkillLevel(hero, skill);
+		}
+		loadPlayer(player).set("Points", hero.getLevel(heroclass) - i);
+		savePlayerConfig();
 	}
 	
 	public void savePlayer(Player player){
@@ -296,10 +304,9 @@ public class HeroesSkillTree extends JavaPlugin {
 		setPlayerPoints(hero, getPlayerPoints(hero));
 		for(Skill skill : heroes.getSkillManager().getSkills()){
 			if(hero.hasAccessToSkill(skill)){
-				if(!getPlayerConfig().getConfigurationSection(player.getName()).contains(skill.getName())){
+				if(!loadPlayer(player).contains(skill.getName())){
 					//Creates new skills to player's section
-					getPlayerConfig().getConfigurationSection(player.getName()).set(skill.getName(), 0);
-					savePlayerConfig();
+					loadPlayer(player).set(skill.getName(), 0);
 				}
 			}
 		}
@@ -317,20 +324,20 @@ public class HeroesSkillTree extends JavaPlugin {
 	}
 	
 	public int getPlayerPoints(Hero hero){
-		return getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).getInt("Points");
+		return loadPlayer(hero.getPlayer()).getInt("Points");
 	}
 	
 	public void setPlayerPoints(Hero hero, int i){
-		getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).set("Points", i);
+		loadPlayer(hero.getPlayer()).set("Points", i);
 		savePlayerConfig();
 	}
 	
 	public int getSkillLevel(Hero hero, Skill skill){
-		return getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).getInt(skill.getName());
+		return loadPlayer(hero.getPlayer()).getInt(skill.getName());
 	}
 	
 	public void setSkillLevel(Hero hero, Skill skill, int i){
-		getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).set(skill.getName(), i);
+		loadPlayer(hero.getPlayer()).set(skill.getName(), i);
 		savePlayerConfig();
 	}
 	

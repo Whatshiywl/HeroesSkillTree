@@ -32,23 +32,8 @@ public class EventListener implements Listener
 			}
 		}
 	}
-	
-	@EventHandler(priority = EventPriority.HIGHEST)
-	public void onPlayerReset(ClassChangeEvent event){
-		Hero hero = event.getHero();
-		if(event.getTo().isDefault()){
-			plugin.setPlayerPoints(hero, 0);
-			plugin.savePlayer(hero.getPlayer());
-		}
-		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
-			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-				//hero.getPlayer().sendMessage("Removing Effect");
-				hero.removeEffect(hero.getEffect(skill.getName()));
-			}
-		}
-	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onLevelChangeEvent(HeroChangeLevelEvent event)
 	{
 		Hero hero = event.getHero();
@@ -62,11 +47,14 @@ public class EventListener implements Listener
 		}
 	}
 
-	@EventHandler(priority = EventPriority.HIGHEST)
+	@EventHandler(priority = EventPriority.MONITOR)
 	public void onClassChangeEvent(ClassChangeEvent event)
 	{
 		Hero hero = event.getHero();
-		plugin.savePlayer(hero.getPlayer());
+		if(event.getTo().isDefault()){
+			plugin.setPlayerPoints(hero, 0);
+		}
+		plugin.recalcPlayer(hero.getPlayer(), event.getTo());
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
 				//hero.getPlayer().sendMessage("Removing Effect");
