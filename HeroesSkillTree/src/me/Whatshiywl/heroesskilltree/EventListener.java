@@ -1,5 +1,6 @@
 package me.Whatshiywl.heroesskilltree;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -26,7 +27,7 @@ public class EventListener implements Listener
 		plugin.savePlayer(player);
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-				hero.getPlayer().sendMessage("Removing Effect");
+				//hero.getPlayer().sendMessage("Removing Effect");
 				hero.removeEffect(hero.getEffect(skill.getName()));
 			}
 		}
@@ -41,7 +42,7 @@ public class EventListener implements Listener
 		}
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-				hero.getPlayer().sendMessage("Removing Effect");
+				//hero.getPlayer().sendMessage("Removing Effect");
 				hero.removeEffect(hero.getEffect(skill.getName()));
 			}
 		}
@@ -55,7 +56,7 @@ public class EventListener implements Listener
 		plugin.savePlayer(hero.getPlayer());
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-				hero.getPlayer().sendMessage("Removing Effect");
+				//hero.getPlayer().sendMessage("Removing Effect");
 				hero.removeEffect(hero.getEffect(skill.getName()));
 			}
 		}
@@ -65,9 +66,10 @@ public class EventListener implements Listener
 	public void onClassChangeEvent(ClassChangeEvent event)
 	{
 		Hero hero = event.getHero();
+		plugin.savePlayer(hero.getPlayer());
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-				hero.getPlayer().sendMessage("Removing Effect");
+				//hero.getPlayer().sendMessage("Removing Effect");
 				hero.removeEffect(hero.getEffect(skill.getName()));
 			}
 		}
@@ -75,11 +77,10 @@ public class EventListener implements Listener
 	
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerUseSkill(SkillUseEvent event){
-		if(plugin.isLocked(event.getHero(), event.getSkill())){
-			event.getPlayer().sendMessage("This skill is still locked!");
+		if(plugin.isLocked(event.getHero(), event.getSkill()) && !event.getPlayer().hasPermission("skilltree.override.locked")){
+			event.getPlayer().sendMessage(ChatColor.RED + "This skill is still locked!");
 			event.getHero().hasEffect(event.getSkill().getName());
 			event.setCancelled(true);
 		}
 	}
-	
 }

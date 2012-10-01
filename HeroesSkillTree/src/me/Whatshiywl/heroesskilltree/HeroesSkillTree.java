@@ -9,6 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
@@ -53,7 +54,7 @@ public class HeroesSkillTree extends JavaPlugin {
 	{
 		plugin = this;
 		PluginDescriptionFile pdfFile = this.getDescription();
-		this.logger.info(pdfFile.getName() + " Version " + pdfFile.getVersion() + " Has Been Enabled!");
+		this.logger.info("[" + pdfFile.getName() + "] Version " + pdfFile.getVersion() + " Has Been Enabled!");
 		PluginManager pm = getServer().getPluginManager();
 		getConfig().options().copyDefaults(true);
 		saveConfig();
@@ -72,11 +73,16 @@ public class HeroesSkillTree extends JavaPlugin {
 		if(sender instanceof Player){
 			Player player = (Player) sender;
 			Hero hero = heroes.getCharacterManager().getHero(player);
-			if(commandLabel.equalsIgnoreCase("skillup"))
-			{
+			
+			//SKILLUP
+			if(commandLabel.equalsIgnoreCase("skillup")){
+				if(!player.hasPermission("skilltree.up")){
+					player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
+					return false;
+				}
 				if(args.length > 0){
-					Skill skill = heroes.getSkillManager().getSkill(args[0]);
 					if(hero.hasAccessToSkill(args[0])){
+						Skill skill = heroes.getSkillManager().getSkill(args[0]);
 						int i;
 						if(args.length > 1) i = Integer.parseInt(args[1]);
 						else i = 1;
@@ -84,58 +90,175 @@ public class HeroesSkillTree extends JavaPlugin {
 							if(getSkillMaxLevel(hero, skill) >= getSkillLevel(hero, skill) + i){
 								if(isLocked(hero, skill)){
 									if(canUnlock(hero, skill)){
-										setPlayerPoints(hero, getPlayerPoints(hero) - i);
+										if(!player.hasPermission("skilltree.override.usepoints")) setPlayerPoints(hero, getPlayerPoints(hero) - i);
 										setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
 										savePlayerConfig();
+										player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "You have unlocked " + skill.getName() + "! Level: " + getSkillLevel(hero, skill));
 									}
-									else player.sendMessage("You can't unlock this skill!");
+									else player.sendMessage(ChatColor.RED + "You can't unlock this skill! /skillinfo (skill) to see requirements.");
 								}
 								else{
-									setPlayerPoints(hero, getPlayerPoints(hero) - i);
+									if(!player.hasPermission("skilltree.override.usepoints")) setPlayerPoints(hero, getPlayerPoints(hero) - i);
 									setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
 									savePlayerConfig();
+									if(isMastered(hero, skill)) player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.GREEN + "You have mastered " + skill.getName() + " at level " + getSkillLevel(hero, skill) + "!");
+									else player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + skill.getName() + " level up: " + getSkillLevel(hero, skill));
 								}
 							}
-							else player.sendMessage("This skill is already mastered");
+							else player.sendMessage(ChatColor.RED + "This skill has already been mastered.");
 						}
-						else player.sendMessage("You don't have enough SkillPoints");
+						else player.sendMessage(ChatColor.RED + "You don't have enough SkillPoints.");
 					}
-					else if(heroes.getSkillManager().getSkills().contains(skill)) player.sendMessage("You don't have this skill");
-					else player.sendMessage("This skill doesn't exist");
+					else if(heroes.getSkillManager().getSkills().contains(args[0])) player.sendMessage(ChatColor.RED + "You don't have this skill");
+					else player.sendMessage(ChatColor.RED + "This skill doesn't exist");
 				}
-				else{
-					player.sendMessage("No skill given");
-				}
+				else player.sendMessage(ChatColor.RED + "No skill given: /skillup (skill) [amount]");
 			}
-			else if(commandLabel.equalsIgnoreCase("skilldown"))
-			{
+			
+			//SKILLDOWN
+			else if(commandLabel.equalsIgnoreCase("skilldown")){
+				if(!player.hasPermission("skilltree.down")){
+					player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
+					return false;
+				}
 				if(args.length > 0){
-					Skill skill = heroes.getSkillManager().getSkill(args[0]);
 					if(hero.hasAccessToSkill(args[0])){
+						Skill skill = heroes.getSkillManager().getSkill(args[0]);
 						int i;
 						if(args.length > 1) i = Integer.parseInt(args[1]);
 						else i = 1;
 						if(getSkillLevel(hero, skill) >= i){
-							//if(getSkillLevel(hero, skill) - i >= 1){ //Won't allow players to re-lock skills 
-								setPlayerPoints(hero, getPlayerPoints(hero) + i);
+							if(getSkillLevel(hero, skill) - i >= 1){
+								if(player.hasPermission("skilltree.lock")){
+									player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
+									return false;
+								}
+								if(!player.hasPermission("skilltree.override.usepoints")) setPlayerPoints(hero, getPlayerPoints(hero) + i);
 								setSkillLevel(hero, skill, getSkillLevel(hero, skill) - i);
 								savePlayerConfig();
-							//}
-							//else player.sendMessage("This skill is already locked");
+								if(isLocked(hero, skill)) player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "You have locked " + skill.getName() + "!");
+								else player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + skill.getName() + "level down: " + getSkillLevel(hero, skill));
+							}
 						}
-						else player.sendMessage("This skill is not a high enough level");
+						else player.sendMessage(ChatColor.RED + "This skill is not a high enough level");
 					}
-					else if(heroes.getSkillManager().getSkills().contains(skill)) player.sendMessage("You don't have this skill");
-					else player.sendMessage("This skill doesn't exist");
+					else if(heroes.getSkillManager().getSkills().contains(args[0])) player.sendMessage(ChatColor.RED + "You don't have this skill");
+					else player.sendMessage(ChatColor.RED + "This skill doesn't exist");
 				}
-				else{
-					player.sendMessage("No skill given");
-				}
+				else player.sendMessage(ChatColor.RED + "No skill given: /skilldown (skill) [amount]");
 			}
-			else if(commandLabel.equalsIgnoreCase("parents")){
-				if(args.length > 0){
-					player.sendMessage(getStrongParentSkills(hero, heroes.getSkillManager().getSkill(args[0])).toString());
+			
+			//SKILLINFO
+			else if(commandLabel.equalsIgnoreCase("skillinfo")){
+				if(player.hasPermission("skilltree.info")){
+					if(args.length > 0){
+						if(hero.hasAccessToSkill(args[0])){
+							Skill skill = heroes.getSkillManager().getSkill(args[0]);
+							player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + skill.getName() + "'s info:");
+							if(isLocked(hero, skill)) player.sendMessage(ChatColor.RED + "This skill is currently locked!");
+							else if(isMastered(hero, skill)) player.sendMessage(ChatColor.GREEN + "This skill has been mastered at level " + getSkillLevel(hero, skill) + "!");
+							else{
+								player.sendMessage(ChatColor.AQUA + "Level: " + getSkillLevel(hero, skill));
+								player.sendMessage(ChatColor.AQUA + "Mastering level: " + getSkillMaxLevel(hero, skill));
+							}
+							if(isLocked(hero, skill)){
+								if(getStrongParentSkills(hero, skill) != null && getWeakParentSkills(hero, skill) != null){
+									player.sendMessage(ChatColor.AQUA + "Requirements:");
+									if(getStrongParentSkills(hero, skill) != null) player.sendMessage(ChatColor.AQUA + "Strong: " + getStrongParentSkills(hero, skill).toString());
+									if(getWeakParentSkills(hero, skill) != null) player.sendMessage(ChatColor.AQUA + "Weak: " + getWeakParentSkills(hero, skill).toString());
+								}
+							}
+							if(player.hasPermission("skilltree.points")) player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "You currently have " + getPlayerPoints(hero) + " SkillPoints.");
+						}
+						else if(heroes.getSkillManager().getSkills().contains(args[0])) player.sendMessage(ChatColor.RED + "You don't have this skill");
+						else player.sendMessage(ChatColor.RED + "This skill doesn't exist");
+					}
+					else player.sendMessage(ChatColor.RED + "/skillinfo (skill)");
 				}
+				else player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
+			}
+			
+			//SKILLPOINTS
+			else if(commandLabel.equalsIgnoreCase("skillpoints")){
+				if(player.hasPermission("skilltree.points")) player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "You currently have " + getPlayerPoints(hero) + " SkillPoints.");
+				else player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
+			}
+			
+			//SKILLADMIN
+			else if(commandLabel.equalsIgnoreCase("skilladmin")){
+				if(args.length > 0){
+					if(args[0].equalsIgnoreCase("clear")){
+						if(player.hasPermission("skilladmin.clear")){
+							if(args.length == 2){
+								if(Bukkit.getPlayer(args[1]) != null){
+									Hero thero = heroes.getCharacterManager().getHero(Bukkit.getPlayer(args[1]));
+									setPlayerPoints(thero, 0);
+								}
+								else player.sendMessage(ChatColor.RED + "Sorry, " + args[1] + " is not online.");
+							}
+							else setPlayerPoints(hero, 0);
+						}
+						else player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
+					}
+					else if(args[0].equalsIgnoreCase("reset")){
+						if(player.hasPermission("skilladmin.reset")){
+							if(args.length == 2){
+								if(Bukkit.getPlayer(args[1]) != null){
+									resetPlayer(Bukkit.getPlayer(args[1]));
+								}
+								else player.sendMessage(ChatColor.RED + "Sorry, " + args[1] + " is not online.");
+							}
+							else{
+								resetPlayer(player);
+							}
+						}
+						else player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
+					}
+					else if(args.length > 1){
+						if(args[0].equalsIgnoreCase("set")){
+							if(player.hasPermission("skilladmin.set")){
+								if(args.length > 2){
+									if(Bukkit.getPlayer(args[2]) != null){
+										Hero thero = heroes.getCharacterManager().getHero(Bukkit.getPlayer(args[2]));
+										setPlayerPoints(thero, Integer.parseInt(args[1]));
+									}
+									else player.sendMessage(ChatColor.RED + "Sorry, " + args[2] + " is not online.");
+								}
+								else setPlayerPoints(hero, Integer.parseInt(args[1]));
+							}
+							else player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
+						}
+						else if(args[0].equalsIgnoreCase("give")){
+							if(player.hasPermission("skilladmin.give")){
+								if(args.length > 2){
+									if(Bukkit.getPlayer(args[2]) != null){
+										Hero thero = heroes.getCharacterManager().getHero(Bukkit.getPlayer(args[2]));
+										setPlayerPoints(thero, getPlayerPoints(thero) + Integer.parseInt(args[1]));
+									}
+									else player.sendMessage(ChatColor.RED + "Sorry, " + args[2] + " is not online.");
+								}
+								else setPlayerPoints(hero, getPlayerPoints(hero) + Integer.parseInt(args[1]));
+							}
+							else player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
+						}
+						else if(args[0].equalsIgnoreCase("remove")){
+							if(player.hasPermission("skilladmin.remove")){
+								if(args.length > 2){
+									if(Bukkit.getPlayer(args[2]) != null){
+										Hero thero = heroes.getCharacterManager().getHero(Bukkit.getPlayer(args[2]));
+										setPlayerPoints(thero, getPlayerPoints(thero) - Integer.parseInt(args[1]));
+									}
+									else player.sendMessage(ChatColor.RED + "Sorry, " + args[2] + " is not online.");
+								}
+								else setPlayerPoints(hero, getPlayerPoints(hero) - Integer.parseInt(args[1]));
+							}
+							else player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
+						}
+						else player.sendMessage(ChatColor.RED + "/skilladmin (set/give/remove/clear/reset)");
+					}
+					else player.sendMessage(ChatColor.RED + "Not enough arguments: /skilladmin <command> (amount) [player]");
+				}
+				else player.sendMessage(ChatColor.RED + "/skilladmin <command> (amount) [player]");
 			}
 		}
 		return false;
@@ -172,10 +295,24 @@ public class HeroesSkillTree extends JavaPlugin {
 		setPlayerPoints(hero, getPlayerPoints(hero));
 		for(Skill skill : heroes.getSkillManager().getSkills()){
 			if(hero.hasAccessToSkill(skill)){
-				
+				if(!getPlayerConfig().getConfigurationSection(player.getName()).contains(skill.getName())){
+					//Creates new skills to player's section
+					getPlayerConfig().getConfigurationSection(player.getName()).set(skill.getName(), 0);
+					savePlayerConfig();
+				}
 			}
 		}
 		savePlayerConfig();
+	}
+	
+	public void resetPlayer(Player player){
+		Hero hero = heroes.getCharacterManager().getHero(player);
+		setPlayerPoints(hero, 0);
+		for(Skill skill : heroes.getSkillManager().getSkills()){
+			if(!isLocked(hero, skill)){
+				setSkillLevel(hero, skill, 0);
+			}
+		}
 	}
 	
 	public int getPlayerPoints(Hero hero){
@@ -184,6 +321,7 @@ public class HeroesSkillTree extends JavaPlugin {
 	
 	public void setPlayerPoints(Hero hero, int i){
 		getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).set("Points", i);
+		savePlayerConfig();
 	}
 	
 	public int getSkillLevel(Hero hero, Skill skill){
@@ -192,6 +330,7 @@ public class HeroesSkillTree extends JavaPlugin {
 	
 	public void setSkillLevel(Hero hero, Skill skill, int i){
 		getPlayerConfig().getConfigurationSection(hero.getPlayer().getName()).set(skill.getName(), i);
+		savePlayerConfig();
 	}
 	
 	public int getSkillMaxLevel(Hero hero, Skill skill){
