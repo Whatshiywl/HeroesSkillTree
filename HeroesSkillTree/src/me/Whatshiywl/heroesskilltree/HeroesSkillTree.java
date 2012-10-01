@@ -274,14 +274,8 @@ public class HeroesSkillTree extends JavaPlugin {
 
 		if(!getPlayerConfig().getConfigurationSection(player.getName()).contains("Points")){
 			//Creates point recorder for player
-			int i = 0;
-			for(HeroClass heroClass : heroes.getClassManager().getClasses()){
-				if(hero.getLevel(heroClass) > 0){
-					i += hero.getLevel(heroClass);
-				}
-			}
 			getPlayerConfig().getConfigurationSection(player.getName()).createSection("Points");
-			getPlayerConfig().getConfigurationSection(player.getName()).set("Points", i);
+			getPlayerConfig().getConfigurationSection(player.getName()).set("Points", hero.getTieredLevel(false));
 			savePlayerConfig();
 		}
 		
