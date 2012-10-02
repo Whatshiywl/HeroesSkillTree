@@ -21,12 +21,12 @@ just like classes do.
 Parenting system works.
 Locked skills can't be used (doesn't work with PassiveSkill due to lack of related API)
 Permissions nodes allow admins to set their best configuration.
-Recognizes "hst-health/mana/reagent/stamina" from skill configs for per-skill-level changes
+Recognizes "hst-health/mana/reagent/stamina/damage" from skill configs for per-skill-level changes
 
 TODO:
                     BASIC PACKAGE:
 - Cancel PassiveSkill somehow
-- Create support for more nodes (damage, cooldown, amount and more)
+- Create support for more nodes (cooldown, amount and more)
   
                     OTHER THINGS:
 - Add configurable cost to unlock/reset/leveup/leveldown skills

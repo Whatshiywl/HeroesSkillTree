@@ -1,6 +1,5 @@
 package me.Whatshiywl.heroesskilltree;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -8,7 +7,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import com.herocraftonline.heroes.Heroes;
 import com.herocraftonline.heroes.api.events.*;
 import com.herocraftonline.heroes.characters.Hero;
 import com.herocraftonline.heroes.characters.skill.Skill;
@@ -69,17 +67,15 @@ public class EventListener implements Listener
 	//@SuppressWarnings("static-access")
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerUseSkill(SkillUseEvent event){
+		Hero hero = event.getHero();
+		Skill skill = event.getSkill();
 		if(plugin.isLocked(event.getHero(), event.getSkill()) && !event.getPlayer().hasPermission("skilltree.override.locked")){
 			event.getPlayer().sendMessage(ChatColor.RED + "This skill is still locked!");
 			event.getHero().hasEffect(event.getSkill().getName());
 			event.setCancelled(true);
 		}
 		else{
-			Hero hero = event.getHero();
-			Skill skill = event.getSkill();
-			
 			//HEALTH
-			((Heroes)Bukkit.getServer().getPluginManager().getPlugin("Heroes")).getSkillConfigs();
 			int health = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-health", 0.0, false)) * 
 					(plugin.getSkillLevel(hero, skill) - 1));
 			health = health > 0 ? health : 0;
@@ -104,6 +100,33 @@ public class EventListener implements Listener
 					plugin.getSkillLevel(hero, skill) - 1);
 			stamina = stamina > 0 ? stamina : 0;
 			event.setStaminaCost(event.getStaminaCost() + stamina);
+		}
+	}
+	
+	@EventHandler(priority = EventPriority.HIGHEST)
+	public void onWeaponDamge (WeaponDamageEvent event){
+		if(event.getDamager() instanceof Hero){
+			Hero hero = (Hero) event.getDamager();
+			for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
+				if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
+					/**
+					 * Idea for removing passive skills:
+					 * Instead of trying to remove the effect, set the damage or whatever the skill does
+					 * to "normal" if the level of the skill equals 0, since they won't be able to
+					 * unlock it anyways. Ofc, test if the hero has that effect to be sure they are
+					 * attempting to use that passive skill.
+					 */
+					//hero.getPlayer().sendMessage("Removing Effect");
+					hero.removeEffect(hero.getEffect(skill.getName()));
+				}
+				else if(hero.hasEffect(skill.getName())){
+					//DAMAGE
+					int damage = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-damage", 0.0, false)) * 
+							(plugin.getSkillLevel(hero, skill) - 1));
+					damage = damage > 0 ? damage : 0;
+					event.setDamage(event.getDamage() + damage);
+				}
+			}
 		}
 	}
 }
