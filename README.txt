@@ -2,7 +2,7 @@ WHAT IT IS MEANT TO DO:
 This plugin intends to implement skill trees to the Heroes plugin.
 All the time a player levels up, it earns one SkillPoint.
 The player can then use these SkillPoints to leve up the skills they have.
-Skills will be unlocked then a player gets a skill to a certain level
+Skills will be unlocked then a player gets it's parent skills to a certain level
 defined on the Heroes/classes/classe.yml itself.
 
 WHAT IT CURRENTLY DOES:
@@ -20,16 +20,17 @@ Skills "master" at "max-level" defined on Heroes/classes/class.yml
 just like classes do.
 Parenting system works.
 Locked skills can't be used (doesn't work with PassiveSkill due to lack of related API)
-Permissions nodes now allow admins to set their best configuration.
+Permissions nodes allow admins to set their best configuration.
+Recognizes "hst-health/mana/reagent/stamina" from skill configs for per-skill-level changes
 
 TODO:
                     BASIC PACKAGE:
-- Use parenting system to cancel skills whenever needed (only PassiveSkills left to be done)
-- Create recognizable config nodes and handle their usage 
-  (eg. mana, reagent-cost, stamina, cooldown, health, amount, etc)
-- Improve the way skills are saved/loaded in/from players.yml
+- Cancel PassiveSkill somehow
+- Create support for more nodes (damage, cooldown, amount and more)
   
                     OTHER THINGS:
 - Add configurable cost to unlock/reset/leveup/leveldown skills
-- Add configurable amount if SkillPoints to be given every level
+- Add configurable amount of SkillPoints to be given every level
 - Add /skilladmin wipe (player) command to earase player from config
+- Add more /skilladmon commands to set per-skill configs on players.yml
+- Suport giving skill levels as parent reqs

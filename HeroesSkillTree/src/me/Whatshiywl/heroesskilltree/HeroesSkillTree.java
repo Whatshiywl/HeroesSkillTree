@@ -29,17 +29,18 @@ import com.herocraftonline.heroes.characters.skill.SkillConfigManager;
 public class HeroesSkillTree extends JavaPlugin {
 	
 	public final Logger logger = Logger.getLogger("Minecraft");
-	public HeroesSkillTree plugin;
     public final EventListener HEventListener = new EventListener(this);
-	public Boolean hasHeroes;
-	public FileConfiguration config;
-	private FileConfiguration playerConfig = null;
-	private File playerConfigFile = null;
-	private FileConfiguration heroesClassConfig = null;
-	private File heroesClassConfigFile = null;
+    
+	public HeroesSkillTree plugin;
 	public Heroes heroes = (Heroes)Bukkit.getServer().getPluginManager().getPlugin("Heroes");
 	public List<Skill> SkillStrongParents = new ArrayList<Skill>();
 	public List<Skill> SkillWeakParents = new ArrayList<Skill>();
+	public Boolean hasHeroes;
+	
+	private FileConfiguration playerConfig = null;
+	private FileConfiguration heroesClassConfig = null;
+	private File playerConfigFile = null;
+	private File heroesClassConfigFile = null;
 	
 	@Override
 	public void onDisable() 
