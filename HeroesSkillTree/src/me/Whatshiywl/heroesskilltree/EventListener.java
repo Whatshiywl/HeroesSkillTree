@@ -6,6 +6,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.inventory.ItemStack;
 
 import com.herocraftonline.heroes.api.events.*;
 import com.herocraftonline.heroes.characters.Hero;
@@ -28,7 +29,6 @@ public class EventListener implements Listener
 		plugin.savePlayer(player);
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-				//hero.getPlayer().sendMessage("Removing Effect");
 				hero.removeEffect(hero.getEffect(skill.getName()));
 			}
 		}
@@ -42,7 +42,6 @@ public class EventListener implements Listener
 		plugin.savePlayer(hero.getPlayer());
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-				//hero.getPlayer().sendMessage("Removing Effect");
 				hero.removeEffect(hero.getEffect(skill.getName()));
 			}
 		}
@@ -51,26 +50,24 @@ public class EventListener implements Listener
 	@EventHandler(priority = EventPriority.MONITOR)
 	public void onClassChangeEvent(ClassChangeEvent event)
 	{
-		Hero hero = event.getHero();
-		if(event.getTo().isDefault()){
-			plugin.setPlayerPoints(hero, 0);
-		}
-		plugin.recalcPlayer(hero.getPlayer(), event.getTo());
-		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
-			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-				//hero.getPlayer().sendMessage("Removing Effect");
-				hero.removeEffect(hero.getEffect(skill.getName()));
+		if(event.getTo() != null){
+			Hero hero = event.getHero();
+			plugin.recalcPlayer(hero.getPlayer(), event.getTo());
+			plugin.savePlayer(hero.getPlayer());
+			for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
+				if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
+					hero.removeEffect(hero.getEffect(skill.getName()));
+				}
 			}
 		}
 	}
 	
-	//@SuppressWarnings("static-access")
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerUseSkill(SkillUseEvent event){
 		Hero hero = event.getHero();
 		Skill skill = event.getSkill();
 		if(plugin.isLocked(event.getHero(), event.getSkill()) && !event.getPlayer().hasPermission("skilltree.override.locked")){
-			event.getPlayer().sendMessage(ChatColor.RED + "This skill is still locked!");
+			event.getPlayer().sendMessage(ChatColor.RED + "This skill is still locked! /skillup (skill) to unlock it.");
 			event.getHero().hasEffect(event.getSkill().getName());
 			event.setCancelled(true);
 		}
@@ -92,8 +89,9 @@ public class EventListener implements Listener
 					(plugin.getSkillLevel(hero, skill) - 1));
 			reagent = reagent > 0 ? reagent : 0;
 			
-			event.getReagentCost().setAmount(event.getReagentCost().getAmount() + reagent);
-			event.setReagentCost(event.getReagentCost());
+			ItemStack is = event.getReagentCost();
+			is.setAmount(event.getReagentCost().getAmount() + reagent);
+			event.setReagentCost(is);
 			
 			//STAMINA
 			int stamina = (int) (SkillConfigManager.getUseSetting(hero, skill, "hst-stamina", 0.0, false) *
@@ -109,14 +107,6 @@ public class EventListener implements Listener
 			Hero hero = (Hero) event.getDamager();
 			for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 				if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-					/**
-					 * Idea for removing passive skills:
-					 * Instead of trying to remove the effect, set the damage or whatever the skill does
-					 * to "normal" if the level of the skill equals 0, since they won't be able to
-					 * unlock it anyways. Ofc, test if the hero has that effect to be sure they are
-					 * attempting to use that passive skill.
-					 */
-					//hero.getPlayer().sendMessage("Removing Effect");
 					hero.removeEffect(hero.getEffect(skill.getName()));
 				}
 				else if(hero.hasEffect(skill.getName())){

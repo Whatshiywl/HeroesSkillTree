@@ -19,13 +19,12 @@ SkillPoints are properly used.
 Skills "master" at "max-level" defined on Heroes/classes/class.yml
 just like classes do.
 Parenting system works.
-Locked skills can't be used (doesn't work with PassiveSkill due to lack of related API)
+Locked skills can't be used
 Permissions nodes allow admins to set their best configuration.
 Recognizes "hst-health/mana/reagent/stamina/damage" from skill configs for per-skill-level changes
 
 TODO:
                     BASIC PACKAGE:
-- Cancel PassiveSkill somehow
 - Create support for more nodes (cooldown, amount and more)
   
                     OTHER THINGS:
@@ -33,4 +32,4 @@ TODO:
 - Add configurable amount of SkillPoints to be given every level
 - Add /skilladmin wipe (player) command to earase player from config
 - Add more /skilladmon commands to set per-skill configs on players.yml
-- Suport giving skill levels as parent reqs
+- Suport having certain skill levels as parent reqs
