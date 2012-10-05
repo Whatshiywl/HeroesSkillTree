@@ -95,7 +95,6 @@ public class HeroesSkillTree extends JavaPlugin {
 										if(!player.hasPermission("skilltree.override.usepoints")) setPlayerPoints(hero, getPlayerPoints(hero) - i);
 										setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
 										savePlayerConfig();
-										//CharacterTemplate ct = null;
 										hero.addEffect(new Effect(skill, skill.getName()));
 										player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "You have unlocked " + skill.getName() + "! Level: " + getSkillLevel(hero, skill));
 									}
@@ -172,11 +171,10 @@ public class HeroesSkillTree extends JavaPlugin {
 							if(isLocked(hero, skill)) player.sendMessage(ChatColor.RED + "This skill is currently locked!");
 							else if(isMastered(hero, skill)) player.sendMessage(ChatColor.GREEN + "This skill has been mastered at level " + getSkillLevel(hero, skill) + "!");
 							else{
-								player.sendMessage(ChatColor.AQUA + "Level: " + getSkillLevel(hero, skill));
-								player.sendMessage(ChatColor.AQUA + "Mastering level: " + getSkillMaxLevel(hero, skill));
+								player.sendMessage(ChatColor.AQUA + "Level: " + getSkillLevel(hero, skill) + "/" + getSkillMaxLevel(hero, skill));
 							}
 							if(isLocked(hero, skill)){
-								if(getStrongParentSkills(hero, skill) != null && getWeakParentSkills(hero, skill) != null){
+								if(getStrongParentSkills(hero, skill) != null || getWeakParentSkills(hero, skill) != null){
 									player.sendMessage(ChatColor.AQUA + "Requirements:");
 									if(getStrongParentSkills(hero, skill) != null) player.sendMessage(ChatColor.AQUA + "Strong: " + getStrongParentSkills(hero, skill).toString());
 									if(getWeakParentSkills(hero, skill) != null) player.sendMessage(ChatColor.AQUA + "Weak: " + getWeakParentSkills(hero, skill).toString());
@@ -197,7 +195,7 @@ public class HeroesSkillTree extends JavaPlugin {
 				if(player.hasPermission("skilltree.points")) player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "You currently have " + getPlayerPoints(hero) + " SkillPoints.");
 				else player.sendMessage(ChatColor.RED + "You don't have enough permissions!");
 			}
-			//player
+			
 			//SKILLADMIN
 			else if(commandLabel.equalsIgnoreCase("skilladmin")){
 				if(args.length > 0){
@@ -357,6 +355,11 @@ public class HeroesSkillTree extends JavaPlugin {
 		else{
 			getPlayerClassConfig(player).createSection(heroclass.getName());
 			getPlayerClassConfig(player).set(heroclass.getName(), 0);
+			for(Skill skill : heroes.getSkillManager().getSkills()) if(heroclass.hasSkill(skill.getName())){
+				if(!getPlayerSkillConfig(player).contains(skill.getName())){
+					getPlayerConfig().getConfigurationSection(player.getName() + ".skills").set(skill.getName(), 0);
+				}
+			}
 		}
 		savePlayerConfig();
 	}
@@ -376,19 +379,23 @@ public class HeroesSkillTree extends JavaPlugin {
 	}
 	
 	public void resetPlayer(Player player){
+		for(Skill skill : heroes.getSkillManager().getSkills()){
+			if(getPlayerConfig().getConfigurationSection(player.getName() + ".skills").contains(skill.getName())){
+				getPlayerConfig().getConfigurationSection(player.getName() + ".skills").set(skill.getName(), null);
+			}
+		}
 		for(HeroClass heroclass : heroes.getClassManager().getClasses()){
 			if(heroclass.isDefault()){
-				getPlayerClassConfig(player).set(heroclass.getName(), 0);
+				getPlayerConfig().getConfigurationSection(player.getName() + ".classes").set(heroclass.getName(), 0);
+				for(Skill skill : heroes.getSkillManager().getSkills()) if(heroclass.hasSkill(skill.getName())){
+					getPlayerConfig().getConfigurationSection(player.getName() + ".skills").set(skill.getName(), 0);
+				}
 			}
-			else if(getPlayerClassConfig(player).contains(heroclass.getName())){
-				getPlayerClassConfig(player).set(heroclass.getName(), null);
-			}
-		}
-		for(Skill skill : heroes.getSkillManager().getSkills()){
-			if(getPlayerClassConfig(player).contains(skill.getName())){
-				getPlayerClassConfig(player).set(skill.getName(), null);
+			else if(getPlayerConfig().getConfigurationSection(player.getName() + ".classes").contains(heroclass.getName())){
+				getPlayerConfig().getConfigurationSection(player.getName() + ".classes").set(heroclass.getName(), null);
 			}
 		}
+		savePlayerConfig();
 	}
 	
 	public int getPlayerPoints(Hero hero){

@@ -52,11 +52,14 @@ public class EventListener implements Listener
 	{
 		if(event.getTo() != null){
 			Hero hero = event.getHero();
-			plugin.recalcPlayer(hero.getPlayer(), event.getTo());
-			plugin.savePlayer(hero.getPlayer());
-			for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
-				if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-					hero.removeEffect(hero.getEffect(skill.getName()));
+			if(event.getTo().isDefault()) plugin.resetPlayer(hero.getPlayer());
+			else{
+				plugin.recalcPlayer(hero.getPlayer(), event.getTo());
+				plugin.savePlayer(hero.getPlayer());
+				for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
+					if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
+						hero.removeEffect(hero.getEffect(skill.getName()));
+					}
 				}
 			}
 		}
