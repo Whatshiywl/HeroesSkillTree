@@ -93,7 +93,7 @@ public class EventListener implements Listener
 			reagent = reagent > 0 ? reagent : 0;
 			
 			ItemStack is = event.getReagentCost();
-			is.setAmount(event.getReagentCost().getAmount() + reagent);
+			if(is != null) is.setAmount(event.getReagentCost().getAmount() + reagent);
 			event.setReagentCost(is);
 			
 			//STAMINA

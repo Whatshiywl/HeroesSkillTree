@@ -105,7 +105,8 @@ public class HeroesSkillTree extends JavaPlugin {
 									setSkillLevel(hero, skill, getSkillLevel(hero, skill) + i);
 									savePlayerConfig();
 									if(isMastered(hero, skill)) player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.GREEN + "You have mastered " + skill.getName() + " at level " + getSkillLevel(hero, skill) + "!");
-									else player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + skill.getName() + " leveled up: " + getSkillLevel(hero, skill));
+									else player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + skill.getName() + 
+											" leveled up: " + getSkillLevel(hero, skill) + "/" + getSkillMaxLevel(hero, skill));
 								}
 							}
 							else player.sendMessage(ChatColor.RED + "This skill has already been mastered.");
@@ -150,7 +151,8 @@ public class HeroesSkillTree extends JavaPlugin {
 								if(!player.hasPermission("skilltree.override.usepoints")) setPlayerPoints(hero, getPlayerPoints(hero) + i);
 								setSkillLevel(hero, skill, getSkillLevel(hero, skill) - i);
 								savePlayerConfig();
-								player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + skill.getName() + "leveled down: " + getSkillLevel(hero, skill));
+								player.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + skill.getName() + 
+										"leveled down: " + getSkillLevel(hero, skill) + "/" + getSkillMaxLevel(hero, skill));
 							}
 						}
 						else player.sendMessage(ChatColor.RED + "This skill is not a high enough level");
