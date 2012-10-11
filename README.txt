@@ -22,6 +22,7 @@ Parenting system works.
 Locked skills can't be used
 Permissions nodes allow admins to set their best configuration.
 Recognizes "hst-health/mana/reagent/stamina/damage" from skill configs for per-skill-level changes
+Supports configurable amount of SkillPoints to be earned/loss each level
 
 TODO:
                     BASIC PACKAGE:
@@ -29,7 +30,8 @@ TODO:
   
                     OTHER THINGS:
 - Add configurable cost to unlock/reset/leveup/leveldown skills
-- Add configurable amount of SkillPoints to be given every level
+- Add configurable cost to level up skills in SkillPoints
 - Add /skilladmin wipe (player) command to earase player from config
-- Add more /skilladmon commands to set per-skill configs on players.yml
+- Add more /skilladmin commands to edit per-skill configs on players.yml
 - Suport having certain skill levels as parent reqs
+- Add Spout features (far future)............>yeah further then that>...

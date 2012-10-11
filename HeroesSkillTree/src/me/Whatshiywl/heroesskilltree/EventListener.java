@@ -38,7 +38,10 @@ public class EventListener implements Listener
 	public void onLevelChangeEvent(HeroChangeLevelEvent event)
 	{
 		Hero hero = event.getHero();
-		plugin.setPlayerPoints(hero, plugin.getPlayerPoints(hero) + (event.getTo() - event.getFrom()));
+		if(!plugin.getConfig().contains("points-per-level")) plugin.getConfig().set("points-per-level", 1);
+		plugin.setPlayerPoints(hero, plugin.getPlayerPoints(hero) + 
+				((event.getTo() - event.getFrom()) * plugin.getConfig().getInt("points-per-level", 1)));
+		hero.getPlayer().sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "SkillPoints: " + plugin.getPlayerPoints(hero));
 		plugin.savePlayer(hero.getPlayer());
 		for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
 			if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){

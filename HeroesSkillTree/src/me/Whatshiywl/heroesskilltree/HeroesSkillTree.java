@@ -46,9 +46,10 @@ public class HeroesSkillTree extends JavaPlugin {
 	@Override
 	public void onDisable() 
 	{
+		savePlayerConfig();
+		for(Player player : Bukkit.getServer().getOnlinePlayers()) savePlayer(player);
 		PluginDescriptionFile pdfFile = this.getDescription();
 		this.logger.info(pdfFile.getName() + " Has Been Disabled!");
-		savePlayerConfig();
 	}
 	
 	@Override	
@@ -406,6 +407,7 @@ public class HeroesSkillTree extends JavaPlugin {
 	
 	public void setPlayerPoints(Hero hero, int i){
 		getPlayerClassConfig(hero.getPlayer()).set(hero.getHeroClass().getName(), i);
+		if(getPlayerPoints(hero) < 0) getPlayerClassConfig(hero.getPlayer()).set(hero.getHeroClass().getName(), 0);
 		savePlayerConfig();
 	}
 	
