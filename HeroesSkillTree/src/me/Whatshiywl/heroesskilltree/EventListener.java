@@ -16,7 +16,7 @@ import com.herocraftonline.heroes.characters.skill.SkillConfigManager;
 public class EventListener implements Listener
 {
 	private static HeroesSkillTree plugin;
-	public EventListener(HeroesSkillTree instance) 
+	public EventListener(HeroesSkillTree instance)
 	{
 		EventListener.plugin = instance;
 	}
@@ -39,7 +39,8 @@ public class EventListener implements Listener
 	{
 		Hero hero = event.getHero();
 		if(!plugin.getConfig().contains("points-per-level")) plugin.getConfig().set("points-per-level", 1);
-		plugin.setPlayerPoints(hero, plugin.getPlayerPoints(hero) + 
+		plugin.loadPlayer(hero.getPlayer());
+		plugin.setPlayerPoints(hero, plugin.getPlayerPoints(hero) +
 				((event.getTo() - event.getFrom()) * plugin.getConfig().getInt("points-per-level", 1)));
 		hero.getPlayer().sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "SkillPoints: " + plugin.getPlayerPoints(hero));
 		plugin.savePlayer(hero.getPlayer());
@@ -67,7 +68,7 @@ public class EventListener implements Listener
 			}
 		}
 	}
-	
+
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onPlayerUseSkill(SkillUseEvent event){
 		Hero hero = event.getHero();
@@ -79,26 +80,26 @@ public class EventListener implements Listener
 		}
 		else{
 			//HEALTH
-			int health = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-health", 0.0, false)) * 
+			int health = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-health", 0.0, false)) *
 					(plugin.getSkillLevel(hero, skill) - 1));
 			health = health > 0 ? health : 0;
 			event.setHealthCost(event.getHealthCost() + health);
-			
+
 			//MANA
-			int mana = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-mana", 0.0, false)) * 
+			int mana = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-mana", 0.0, false)) *
 					(plugin.getSkillLevel(hero, skill) - 1));
 			mana = mana > 0 ? mana : 0;
 			event.setManaCost(event.getManaCost() + mana);
-			
+
 			//REAGENT
 			int reagent = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-reagent", 0.0, false)) *
 					(plugin.getSkillLevel(hero, skill) - 1));
 			reagent = reagent > 0 ? reagent : 0;
-			
+
 			ItemStack is = event.getReagentCost();
 			if(is != null) is.setAmount(event.getReagentCost().getAmount() + reagent);
 			event.setReagentCost(is);
-			
+
 			//STAMINA
 			int stamina = (int) (SkillConfigManager.getUseSetting(hero, skill, "hst-stamina", 0.0, false) *
 					plugin.getSkillLevel(hero, skill) - 1);
@@ -106,7 +107,7 @@ public class EventListener implements Listener
 			event.setStaminaCost(event.getStaminaCost() + stamina);
 		}
 	}
-	
+
 	@EventHandler(priority = EventPriority.HIGHEST)
 	public void onWeaponDamge (WeaponDamageEvent event){
 		if(event.getDamager() instanceof Hero){
@@ -117,7 +118,7 @@ public class EventListener implements Listener
 				}
 				else if(hero.hasEffect(skill.getName())){
 					//DAMAGE
-					int damage = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-damage", 0.0, false)) * 
+					int damage = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-damage", 0.0, false)) *
 							(plugin.getSkillLevel(hero, skill) - 1));
 					damage = damage > 0 ? damage : 0;
 					event.setDamage(event.getDamage() + damage);
