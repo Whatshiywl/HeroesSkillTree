@@ -1,0 +1,14 @@
+#Sets how many SkillPoints the player will earn/lose per level.
+points-per-level: 1
+
+#Sets the cost to unlock a skill (PLANNED)
+#cost-to-unlock: 0
+
+#Sets the cost to level up a skill (PLANNED)
+#cost-to-level-up: 0
+
+#Sets the cost to level down a skill (PLANNED)
+#cost-to-level-down: 0
+
+#Sets the cost to reset all stats (PLANNED)
+#cost-to-reset: 0
