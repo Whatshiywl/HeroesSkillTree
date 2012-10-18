@@ -87,6 +87,7 @@ public class HeroesSkillTree extends JavaPlugin {
         //SKILLINFO
         if(commandLabel.equalsIgnoreCase("skillinfo")){
             SkillInfoCommand.skillInfo(this, sender, args);
+            return true;
         }
 
         //SKILLPOINTS
@@ -102,6 +103,7 @@ public class HeroesSkillTree extends JavaPlugin {
             } else {
                 sender.sendMessage(ChatColor.RED + "You don't have enough permissions!");
             }
+            return true;
         }
 
         //SKILLADMIN
@@ -243,26 +245,27 @@ public class HeroesSkillTree extends JavaPlugin {
         savePlayerConfig();
     }
 
-    public int getSkillMaxLevel(Hero hero, Skill skill){
-        return SkillConfigManager.getUseSetting(hero, skill, "max-level", 0, false);
+    public int getSkillMaxLevel(Hero hero, Skill skill) {
+        return SkillConfigManager.getSetting(hero.getHeroClass(), skill, "max-level", -1) == -1 ?
+                SkillConfigManager.getUseSetting(hero, skill, "max-level", -1, false) :
+                SkillConfigManager.getSetting(hero.getHeroClass(), skill, "max-level", -1);
     }
 
     public List<String> getStrongParentSkills(Hero hero, Skill skill){
-        if(getHeroesClassConfig(hero.getHeroClass()).getConfigurationSection("permitted-skills." + skill.getName() + ".parents") == null) {
-            return null;
-        }
-        return getHeroesClassConfig(hero.getHeroClass()).getConfigurationSection("permitted-skills."
-                + skill.getName() + ".parents").getStringList("strong");
+        return getParentSkills(hero, skill, "strong");
     }
 
     public List<String> getWeakParentSkills(Hero hero, Skill skill){
-        if((getHeroesClassConfig(hero.getHeroClass()).getConfigurationSection("permitted-skills." + skill.getName()).contains("parents")) &&
-            (getHeroesClassConfig(hero.getHeroClass()).getConfigurationSection("permitted-skills." + skill.getName() + ".parents").contains("weak"))){
-                return getHeroesClassConfig(hero.getHeroClass()).
-                        getConfigurationSection("permitted-skills." + skill.getName() + ".parents").getStringList("weak");
-        } else {
+        return getParentSkills(hero, skill, "weak");
+    }
+    
+    public List<String> getParentSkills(Hero hero, Skill skill, String weakOrStrong) {
+        FileConfiguration hCConfig = getHeroesClassConfig(hero.getHeroClass());
+        if(hCConfig.getConfigurationSection("permitted-skills." + skill.getName() + ".parents") == null) {
             return null;
         }
+        return hCConfig.getConfigurationSection("permitted-skills."
+                + skill.getName() + ".parents").getStringList(weakOrStrong);
     }
 
     public boolean isLocked(Hero hero, Skill skill){
@@ -283,7 +286,8 @@ public class HeroesSkillTree extends JavaPlugin {
         if(!hero.hasAccessToSkill(skill) || !hero.canUseSkill(skill)){
             return false;
         }
-        if(getStrongParentSkills(hero, skill) == null && getWeakParentSkills(hero, skill) == null) {
+        if((getStrongParentSkills(hero, skill) == null && getWeakParentSkills(hero, skill) == null) ||
+                (getStrongParentSkills(hero, skill).isEmpty() && getWeakParentSkills(hero, skill).isEmpty())) {
             return true;
         }
         if(getStrongParentSkills(hero, skill) != null){
@@ -291,9 +295,6 @@ public class HeroesSkillTree extends JavaPlugin {
                 if(!isMastered(hero, heroes.getSkillManager().getSkill(name))) {
                     return false;
                 }
-            }
-            if(getWeakParentSkills(hero, skill) == null) {
-                return true;
             }
         }
         if(getWeakParentSkills(hero, skill) != null){

@@ -48,7 +48,7 @@ public class SkillUpCommand {
         Skill skill = HeroesSkillTree.heroes.getSkillManager().getSkill(args[0]);
         
         //Has SkillPoints Check
-        if (hst.getSkillMaxLevel(hero, skill) == 0) {
+        if (hst.getSkillMaxLevel(hero, skill) == -1) {
             sender.sendMessage(ChatColor.RED + "This skill can't be increased");
             return;
         }
