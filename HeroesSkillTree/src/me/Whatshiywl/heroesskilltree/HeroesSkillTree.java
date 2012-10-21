@@ -16,6 +16,7 @@ import java.util.logging.Logger;
 import me.Whatshiywl.heroesskilltree.commands.SkillAdminCommand;
 import me.Whatshiywl.heroesskilltree.commands.SkillDownCommand;
 import me.Whatshiywl.heroesskilltree.commands.SkillInfoCommand;
+import me.Whatshiywl.heroesskilltree.commands.SkillListCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -63,7 +64,6 @@ public class HeroesSkillTree extends JavaPlugin {
         saveConfig();
         getPlayerConfig().options().copyDefaults(true);
         savePlayerConfig();
-        final Heroes heroes = (Heroes)plugin.getServer().getPluginManager().getPlugin("Heroes");
         if(heroes.isEnabled()) {
             pm.registerEvents(this.HEventListener, this);
         }
@@ -109,7 +109,15 @@ public class HeroesSkillTree extends JavaPlugin {
         //SKILLADMIN
         if(commandLabel.equalsIgnoreCase("skilladmin")){
             SkillAdminCommand.skillAdmin(this, sender, args);
+            return true;
         }
+        
+        //SKILLLIST
+        if (commandLabel.equalsIgnoreCase("unlocks") || commandLabel.equalsIgnoreCase("un")) {
+            SkillListCommand.skillList(this, sender, args);
+            return true;
+        }
+        
         sender.sendMessage(ChatColor.RED + "/skilladmin <command> (amount) [player]");
         return true;
     }
@@ -268,9 +276,13 @@ public class HeroesSkillTree extends JavaPlugin {
                 + skill.getName() + ".parents").getStringList(weakOrStrong);
     }
 
-    public boolean isLocked(Hero hero, Skill skill){
+    public boolean isLocked(Hero hero, Skill skill) {
         if(hero.hasAccessToSkill(skill)) {
-            return (getSkillLevel(hero, skill) <= 0);
+            return (getSkillLevel(hero, skill) <= 0 &&
+                    ((getStrongParentSkills(hero, skill) != null ||
+                    getWeakParentSkills(hero, skill) != null) &&
+                    (!getStrongParentSkills(hero, skill).isEmpty() ||
+                    !getWeakParentSkills(hero, skill).isEmpty())));
         }
         return true;
     }
@@ -345,8 +357,7 @@ public class HeroesSkillTree extends JavaPlugin {
     }
 
     public FileConfiguration getHeroesClassConfig(HeroClass HClass) {
-        if (heroesClassConfig == null ||
-                (heroesClassConfig.getString("name") == null ? HClass.getName() != null : !heroesClassConfig.getString("name").equals(HClass.getName()))) {
+        if (heroesClassConfig == null || !heroesClassConfig.getString("name").equals(HClass.getName())) {
             this.reloadHeroesClassConfig(HClass);
         }
         return heroesClassConfig;
