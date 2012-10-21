@@ -20,6 +20,9 @@ commands:
   skilladmin:
     alias: ['sa']
     description: Admin commands
+  unlocks:
+    alias: ['un']
+    description: Shows all unlocked skills
 permissions:
   skilltree.*:
     description: Gives all permissions
