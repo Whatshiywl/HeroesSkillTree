@@ -1,5 +1,6 @@
 package me.Whatshiywl.heroesskilltree;
 
+import com.herocraftonline.heroes.Heroes;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -12,22 +13,38 @@ import com.herocraftonline.heroes.api.events.*;
 import com.herocraftonline.heroes.characters.Hero;
 import com.herocraftonline.heroes.characters.skill.Skill;
 import com.herocraftonline.heroes.characters.skill.SkillConfigManager;
+import org.bukkit.Bukkit;
+import org.bukkit.event.server.PluginDisableEvent;
+import org.bukkit.event.server.PluginEnableEvent;
 
 public class EventListener implements Listener {
     private static HeroesSkillTree plugin;
-    public EventListener(HeroesSkillTree instance)
-    {
+    public EventListener(HeroesSkillTree instance) {
         EventListener.plugin = instance;
+    }
+    
+    @EventHandler
+    public void onPluginEnable(PluginEnableEvent event) {
+        if (event.getPlugin().getDescription().getName().equals("Heroes")) {
+            HeroesSkillTree.heroes = (Heroes) event.getPlugin();
+        }
+    }
+    
+    @EventHandler
+    public void onPluginDisable(PluginDisableEvent event) {
+        if (event.getPlugin().getDescription().getName().equals("Heroes")) {
+            Bukkit.getPluginManager().disablePlugin(plugin);
+        }
     }
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event){
         Player player = event.getPlayer();
-        Hero hero = plugin.heroes.getCharacterManager().getHero(player);
+        Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero(player);
         plugin.loadPlayer(player);
         plugin.savePlayer(player);
-        for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
-            if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
+        for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
+            if(plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())){
                 hero.removeEffect(hero.getEffect(skill.getName()));
             }
         }
@@ -43,26 +60,27 @@ public class EventListener implements Listener {
                 ((event.getTo() - event.getFrom()) * plugin.getConfig().getInt("points-per-level", 1)));
         hero.getPlayer().sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "SkillPoints: " + plugin.getPlayerPoints(hero));
         plugin.savePlayer(hero.getPlayer());
-        for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
-            if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
+        for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
+            if (plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())) {
                 hero.removeEffect(hero.getEffect(skill.getName()));
             }
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onClassChangeEvent(ClassChangeEvent event)
-    {
-        if(event.getTo() != null){
-            Hero hero = event.getHero();
-            if(event.getTo().isDefault()) plugin.resetPlayer(hero.getPlayer());
-            else{
-                plugin.recalcPlayer(hero.getPlayer(), event.getTo());
-                plugin.savePlayer(hero.getPlayer());
-                for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
-                    if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
-                        hero.removeEffect(hero.getEffect(skill.getName()));
-                    }
+    public void onClassChangeEvent(ClassChangeEvent event) {
+        if(event.getTo() == null) {
+            return;
+        }
+        Hero hero = event.getHero();
+        if(event.getTo().isDefault()) {
+            plugin.resetPlayer(hero.getPlayer());
+        } else {
+            plugin.recalcPlayer(hero.getPlayer(), event.getTo());
+            plugin.savePlayer(hero.getPlayer());
+            for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
+                if(plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())){
+                    hero.removeEffect(hero.getEffect(skill.getName()));
                 }
             }
         }
@@ -108,17 +126,23 @@ public class EventListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void onWeaponDamge (WeaponDamageEvent event){
-        if(event.getDamager() instanceof Hero){
-            Hero hero = (Hero) event.getDamager();
-            for(Skill skill : plugin.heroes.getSkillManager().getSkills()){
-                if(plugin.isLocked(hero, skill)) if(hero.hasEffect(skill.getName())){
+    public void onWeaponDamage (WeaponDamageEvent event) {
+        /*if ((event.getDamager() == null) || (event.getDamager().getClass() != Hero.class)) {
+            return;
+        }*/
+        if(!(event.getDamager() instanceof Hero)) {
+            return;
+        }
+        Hero hero = (Hero) event.getDamager();
+        for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
+            if(plugin.isLocked(hero, skill)) {
+                if(hero.hasEffect(skill.getName())){
                     hero.removeEffect(hero.getEffect(skill.getName()));
-                }
-                else if(hero.hasEffect(skill.getName())){
+                    }
+                    else if(hero.hasEffect(skill.getName())){
                     //DAMAGE
                     int damage = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-damage", 0.0, false)) *
-                            (plugin.getSkillLevel(hero, skill) - 1));
+                    (plugin.getSkillLevel(hero, skill) - 1));
                     damage = damage > 0 ? damage : 0;
                     event.setDamage(event.getDamage() + damage);
                 }

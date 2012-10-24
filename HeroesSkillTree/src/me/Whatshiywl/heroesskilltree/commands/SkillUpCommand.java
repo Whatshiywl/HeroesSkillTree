@@ -40,12 +40,13 @@ public class SkillUpCommand {
         }
         Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero((Player) sender);
         
+        Skill skill = HeroesSkillTree.heroes.getSkillManager().getSkill(args[0]);
+        
         //Has Access Check
-        if(!hero.hasAccessToSkill(args[0])) {
+        if(skill == null || !hero.hasAccessToSkill(skill.getName())) {
             sender.sendMessage(ChatColor.RED + "You don't have this skill");
             return;
         }
-        Skill skill = HeroesSkillTree.heroes.getSkillManager().getSkill(args[0]);
         
         //Has SkillPoints Check
         if (hst.getSkillMaxLevel(hero, skill) == -1) {

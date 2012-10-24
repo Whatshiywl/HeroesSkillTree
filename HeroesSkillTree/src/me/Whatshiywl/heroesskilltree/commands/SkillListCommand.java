@@ -28,23 +28,23 @@ public class SkillListCommand {
         if (hero.getHeroClass() != null) {
             for (String skillName : hero.getHeroClass().getSkillNames()) {
                 Skill skill = HeroesSkillTree.heroes.getSkillManager().getSkill(skillName);
-                if (hst.isLocked(hero, skill) || hero.getLevel(hero.getHeroClass()) < hero.getSkillLevel(skill)) {
+                if (hst.isLocked(hero, skill) || !hero.canUseSkill(skill)) {
                     continue;
                 }
                 skills.put(skillName, skill);
                 alphabeticalSkills.add(skillName);
             }
         }
-        if (hero.getSecondClass() != null) {
+        /*if (hero.getSecondClass() != null) {
             for (String skillName : hero.getSecondClass().getSkillNames()) {
                 Skill skill = HeroesSkillTree.heroes.getSkillManager().getSkill(skillName);
-                if (hst.isLocked(hero, skill) || !hero.hasAccessToSkill(skill)) {
+                if (hst.isLocked(hero, skill) || !hero.canUseSkill(skill)) {
                     continue;
                 }
                 skills.put(skillName, skill);
                 alphabeticalSkills.add(skillName);
             }
-        }
+        }*/
         Collections.sort(alphabeticalSkills);
         int k = 0;
         int t = 0;
@@ -56,9 +56,10 @@ public class SkillListCommand {
             } catch (NumberFormatException nfe) {
                 k=0;
             }
-            sender.sendMessage(ChatColor.GOLD + "[HST] Unlocked skills lise page " + t);
+        } else {
+            t = 1;
         }
-        System.out.println(k + ":" + alphabeticalSkills.size());
+        sender.sendMessage(ChatColor.GOLD + "[HST] Unlocked skills list page " + t + "/" + (Math.round(((double) alphabeticalSkills.size()) / 10)));
         for (int i = k; j < 10 && i < alphabeticalSkills.size(); i++) {
             if (j > 9) {
                 break;
