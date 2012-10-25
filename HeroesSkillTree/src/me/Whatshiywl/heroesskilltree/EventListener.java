@@ -41,25 +41,21 @@ public class EventListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event){
         Player player = event.getPlayer();
         Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero(player);
-        plugin.loadPlayer(player);
-        plugin.savePlayer(player);
-        for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
-            if(plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())){
+        plugin.loadPlayer(player.getName());
+        for (Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()) {
+            if (plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())) {
                 hero.removeEffect(hero.getEffect(skill.getName()));
             }
         }
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
-    public void onLevelChangeEvent(HeroChangeLevelEvent event)
-    {
+    public void onLevelChangeEvent(HeroChangeLevelEvent event) {
         Hero hero = event.getHero();
-        if(!plugin.getConfig().contains("points-per-level")) plugin.getConfig().set("points-per-level", 1);
-        plugin.loadPlayer(hero.getPlayer());
         plugin.setPlayerPoints(hero, plugin.getPlayerPoints(hero) +
-                ((event.getTo() - event.getFrom()) * plugin.getConfig().getInt("points-per-level", 1)));
+                ((event.getTo() - event.getFrom()) * plugin.getPointsPerLevel()));
         hero.getPlayer().sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "SkillPoints: " + plugin.getPlayerPoints(hero));
-        plugin.savePlayer(hero.getPlayer());
+        plugin.savePlayerConfig(hero.getPlayer().getName());
         for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
             if (plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())) {
                 hero.removeEffect(hero.getEffect(skill.getName()));

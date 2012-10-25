@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Logger;
 import me.Whatshiywl.heroesskilltree.commands.SkillAdminCommand;
@@ -21,7 +22,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
@@ -37,10 +37,11 @@ public class HeroesSkillTree extends JavaPlugin {
 
     public HeroesSkillTree plugin;
     public static Heroes heroes = (Heroes) Bukkit.getServer().getPluginManager().getPlugin("Heroes");
-    public List<Skill> SkillStrongParents = new ArrayList<Skill>();
-    public List<Skill> SkillWeakParents = new ArrayList<Skill>();
-    private HashMap<String, FileConfiguration> playerConfigs = new HashMap<String, FileConfiguration>();
-    private long lastSave = System.currentTimeMillis();
+    public List<Skill> SkillStrongParents = new ArrayList<>();
+    public List<Skill> SkillWeakParents = new ArrayList<>();
+    private HashMap<String,HashMap<String, Integer>> playerSkills = new HashMap<>();
+    private HashMap<String,HashMap<String, Integer>> playerClasses = new HashMap<>();
+    private int pointsPerLevel = 1;
 
     private FileConfiguration heroesClassConfig = null;
     private File heroesClassConfigFile = null;
@@ -58,9 +59,8 @@ public class HeroesSkillTree extends JavaPlugin {
         PluginManager pm = getServer().getPluginManager();
         getConfig().options().copyDefaults(true);
         saveConfig();
-        if(heroes.isEnabled()) {
-            pm.registerEvents(this.HEventListener, this);
-        }
+        loadConfig();
+        pm.registerEvents(HEventListener, this);
     }
 
     @Override
@@ -188,7 +188,7 @@ public class HeroesSkillTree extends JavaPlugin {
         }
     }
 
-    public void savePlayer(Player player){
+    /*public void savePlayer(Player player){
         Hero hero = heroes.getCharacterManager().getHero(player);
         setPlayerPoints(hero, getPlayerPoints(hero));
         for(Skill skill : heroes.getSkillManager().getSkills()){
@@ -203,7 +203,7 @@ public class HeroesSkillTree extends JavaPlugin {
         } catch (Exception e) {
             System.out.println("[HeroesSkillTree] failed to save " + hero.getPlayer().getName() + ".yml");
         }
-    }
+    }*/
 
     public void resetPlayer(Player player){
         for(Skill skill : heroes.getSkillManager().getSkills()){
@@ -227,10 +227,15 @@ public class HeroesSkillTree extends JavaPlugin {
     }
 
     public int getPlayerPoints(Hero hero){
-        return getPlayerClassConfig(hero.getPlayer()).getInt(hero.getHeroClass().getName());
+        //return getPlayerClassConfig(hero.getPlayer()).getInt(hero.getHeroClass().getName());
+        return playerClasses.get(hero.getPlayer().getName()).get(hero.getHeroClass().getName());
     }
 
-    public void setPlayerPoints(Hero hero, int i){
+    public void setPlayerPoints(Hero hero, int i) {
+        playerClasses.get(hero.getPlayer().getName()).put(hero.getHeroClass().getName(), i);
+    }
+    
+    /*public void setPlayerPoints(Hero hero, int i){
         FileConfiguration playerConfig = getPlayerConfig(hero.getPlayer().getName());
         playerConfig.set("classes." + hero.getHeroClass().getName(), i);
         if(getPlayerPoints(hero) < 0) {
@@ -241,20 +246,22 @@ public class HeroesSkillTree extends JavaPlugin {
         } catch (Exception e) {
             System.out.println("[HeroesSkillTree] failed to save " + hero.getPlayer().getName() + ".yml");
         }
-    }
+    }*/
 
     public int getSkillLevel(Hero hero, Skill skill){
-        return getPlayerSkillConfig(hero.getPlayer()).getInt(skill.getName());
+        //return getPlayerSkillConfig(hero.getPlayer()).getInt(skill.getName());
+        return playerSkills.get(hero.getPlayer().getName()).get(skill.getName());
     }
 
-    public void setSkillLevel(Hero hero, Skill skill, int i){
-        FileConfiguration playerConfig = getPlayerConfig(hero.getPlayer().getName());
+    public void setSkillLevel(Hero hero, Skill skill, int i) {
+        /*FileConfiguration playerConfig = getPlayerConfig(hero.getPlayer().getName());
         playerConfig.set("skills." + skill.getName(), i);
         try {
             playerConfig.save(new File(getDataFolder() + "/data", hero.getPlayer().getName() + ".yml"));
         } catch (Exception e) {
             System.out.println("[HeroesSkillTree] failed to save " + hero.getPlayer().getName() + ".yml");
-        }
+        }*/
+        playerSkills.get(hero.getPlayer().getName()).put(skill.getName(), i);
     }
 
     public int getSkillMaxLevel(Hero hero, Skill skill) {
@@ -328,7 +335,7 @@ public class HeroesSkillTree extends JavaPlugin {
         return true;
     }
 
-    public FileConfiguration loadPlayerConfig(String name) {
+    public void loadPlayerConfig(String name) {
         File playerConfigFile;
         FileConfiguration playerConfig = new YamlConfiguration();
         File playerFolder = new File(getDataFolder(), "data");
@@ -340,17 +347,27 @@ public class HeroesSkillTree extends JavaPlugin {
             try {
                 playerConfigFile.createNewFile();
             } catch (IOException ex) {
-                System.out.println("[HeroesSkillTree] failed to create new " + name + ".yml");
-                return null;
+                logger.severe("[HeroesSkillTree] failed to create new " + name + ".yml");
+                return;
             }
         }
         try {
             playerConfig.load(playerConfigFile);
+            if (!playerSkills.containsKey(name)) {
+                playerSkills.put(name, new HashMap<String, Integer>());
+            }
+            for (String s : playerConfig.getConfigurationSection("skills").getKeys(false)) {
+                playerSkills.get(name).put(s, playerConfig.getInt("skills." + s));
+            }
+            if (!playerClasses.containsKey(name)) {
+                playerClasses.put(name, new HashMap<String, Integer>());
+            }
+            for (String s : playerConfig.getConfigurationSection("classes").getKeys(false)) {
+                playerClasses.get(name).put(s, playerConfig.getInt("classes." + s));
+            }
         } catch (Exception e) {
-            System.out.println("[HeroesSkillTree] failed to load " + name + ".yml");
-            return null;
+            logger.severe("[HeroesSkillTree] failed to load " + name + ".yml");
         }
-        return playerConfig;
     }
 
     public void reloadHeroesClassConfig(HeroClass HClass) {
@@ -366,7 +383,14 @@ public class HeroesSkillTree extends JavaPlugin {
     }
     
     private void saveAll() {
-        for (String s : playerConfigs.keySet()) {
+        HashSet<String> players = new HashSet<>();
+        for (String s : playerSkills.keySet()) {
+            players.add(s);
+        }
+        for (String s : playerClasses.keySet()) {
+            players.add(s);
+        }
+        for (String s : players) {
             savePlayerConfig(s);
         }
     }
@@ -383,10 +407,44 @@ public class HeroesSkillTree extends JavaPlugin {
             }
         }
         try {
+            playerConfig.load(playerFile);
+            if (playerSkills.containsKey(s)) {
+                for (String st : playerSkills.get(s).keySet()) {
+                    playerConfig.set("skills." + s, st);
+                }
+            }
+            if (playerClasses.containsKey(s)) {
+                for (String st : playerClasses.get(s).keySet()) {
+                    playerConfig.set("classes." + s, st);
+                }
+            }
             playerConfig.save(playerFile);
         } catch (Exception e) {
             String message = "[HeroesSkillTree] failed to save " + s + ".yml";
             logger.severe(message);
         }
+    }
+    
+    private void loadConfig() {
+        File configFile = new File(getDataFolder(), "config.yml");
+        if (!configFile.exists()) {
+            try {
+                configFile.createNewFile();
+            } catch (IOException ioe) {
+                logger.severe("[HeroesSkillTree] failed to create new config.yml");
+                return;
+            }
+        }
+        FileConfiguration config = new YamlConfiguration();
+        try {
+            config.load(configFile);
+            pointsPerLevel = config.getInt("points-per-level", 1);
+        } catch (Exception e) {
+            logger.severe("[HeroesSkillTree] failed to load config.yml");
+        }
+    }
+    
+    public int getPointsPerLevel() {
+        return pointsPerLevel;
     }
 }
