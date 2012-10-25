@@ -85,7 +85,7 @@ public class SkillUpCommand {
         }
         
         hst.setSkillLevel(hero, skill, hst.getSkillLevel(hero, skill) + pointsToIncrease);
-        hst.savePlayerConfig();
+        hst.savePlayerConfig(sender.getName());
         hero.addEffect(new Effect(skill, skill.getName()));
         
         

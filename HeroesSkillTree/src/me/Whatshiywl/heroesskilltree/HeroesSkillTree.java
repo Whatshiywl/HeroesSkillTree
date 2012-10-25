@@ -128,7 +128,7 @@ public class HeroesSkillTree extends JavaPlugin {
         return true;
     }
 
-    public FileConfiguration loadPlayer(String name) {
+    /*public FileConfiguration loadPlayer(String name) {
         //Creates new classes section
         FileConfiguration playerConfig = getPlayerConfig(name);
         if(!playerConfig.contains("classes")) {
@@ -144,9 +144,9 @@ public class HeroesSkillTree extends JavaPlugin {
             System.out.println("[HeroesSkillTree] failed to save " + name + ".yml");
         }
         return playerConfig;
-    }
+    }*/
 
-    public void recalcPlayer(Player player, HeroClass heroclass){
+    /*public void recalcPlayer(Player player, HeroClass heroclass){
         Hero hero = heroes.getCharacterManager().getHero(player);
         //If /hero reset
         if(heroclass.isDefault()) {
@@ -186,7 +186,7 @@ public class HeroesSkillTree extends JavaPlugin {
                 System.out.println("[HeroesSkillTree] failed to save " + hero.getPlayer().getName() + ".yml");
             }
         }
-    }
+    }*/
 
     /*public void savePlayer(Player player){
         Hero hero = heroes.getCharacterManager().getHero(player);
@@ -206,24 +206,14 @@ public class HeroesSkillTree extends JavaPlugin {
     }*/
 
     public void resetPlayer(Player player){
-        for(Skill skill : heroes.getSkillManager().getSkills()){
-            if(getPlayerConfig().getConfigurationSection(player.getName() + ".skills").contains(skill.getName())){
-                getPlayerConfig().getConfigurationSection(player.getName() + ".skills").set(skill.getName(), null);
-            }
+        String name = player.getName();
+        for(String skill : playerSkills.get(name).keySet()){
+            playerSkills.get(name).put(skill, 0);
         }
-        for(HeroClass heroclass : heroes.getClassManager().getClasses()){
-            if(heroclass.isDefault()){
-                getPlayerConfig().getConfigurationSection(player.getName() + ".classes").set(heroclass.getName(), 0);
-                for(Skill skill : heroes.getSkillManager().getSkills()) {
-                    if(heroclass.hasSkill(skill.getName())){
-                        getPlayerConfig().getConfigurationSection(player.getName() + ".skills").set(skill.getName(), 0);
-                    }
-                }
-            } else if (getPlayerConfig().getConfigurationSection(player.getName() + ".classes").contains(heroclass.getName())){
-                getPlayerConfig().getConfigurationSection(player.getName() + ".classes").set(heroclass.getName(), null);
-            }
+        for(String classes : playerClasses.get(name).keySet()){
+            playerClasses.get(name).put(classes, 0);
         }
-        savePlayerConfig();
+        savePlayerConfig(name);
     }
 
     public int getPlayerPoints(Hero hero){

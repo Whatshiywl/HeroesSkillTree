@@ -57,7 +57,7 @@ public class SkillDownCommand {
             }
             hst.setSkillLevel(hero, skill, hst.getSkillLevel(hero, skill) - pointsDecrease);
             hero.removeEffect(hero.getEffect(skill.getName()));
-            hst.savePlayerConfig();
+            hst.savePlayerConfig(sender.getName());
             sender.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "You have locked " + skill.getName() + "!");
         } else {
             if(!sender.hasPermission("skilltree.down")){
@@ -68,7 +68,7 @@ public class SkillDownCommand {
                 hst.setPlayerPoints(hero, hst.getPlayerPoints(hero) + pointsDecrease);
             }
             hst.setSkillLevel(hero, skill, hst.getSkillLevel(hero, skill) - pointsDecrease);
-            hst.savePlayerConfig();
+            hst.savePlayerConfig(sender.getName());
             sender.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + skill.getName() +
                     "leveled down: " + hst.getSkillLevel(hero, skill) + "/" + hst.getSkillMaxLevel(hero, skill));
         }

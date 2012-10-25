@@ -41,7 +41,7 @@ public class EventListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event){
         Player player = event.getPlayer();
         Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero(player);
-        plugin.loadPlayer(player.getName());
+        plugin.loadPlayerConfig(player.getName());
         for (Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()) {
             if (plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())) {
                 hero.removeEffect(hero.getEffect(skill.getName()));
@@ -65,19 +65,22 @@ public class EventListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onClassChangeEvent(ClassChangeEvent event) {
-        if(event.getTo() == null) {
+        /*if(event.getTo() == null) {
             return;
-        }
+        }*/
         Hero hero = event.getHero();
-        if(event.getTo().isDefault()) {
+        /*if(event.getTo().isDefault()) {
             plugin.resetPlayer(hero.getPlayer());
         } else {
             plugin.recalcPlayer(hero.getPlayer(), event.getTo());
-            plugin.savePlayer(hero.getPlayer());
-            for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
-                if(plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())){
-                    hero.removeEffect(hero.getEffect(skill.getName()));
-                }
+            plugin.savePlayerConfig(hero.getPlayer().getName());
+            
+        }*/
+        //TODO change this to actually store skills per classes
+        plugin.resetPlayer(hero.getPlayer());
+        for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
+            if(plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())){
+                hero.removeEffect(hero.getEffect(skill.getName()));
             }
         }
     }
@@ -90,8 +93,7 @@ public class EventListener implements Listener {
             event.getPlayer().sendMessage(ChatColor.RED + "This skill is still locked! /skillup (skill) to unlock it.");
             event.getHero().hasEffect(event.getSkill().getName());
             event.setCancelled(true);
-        }
-        else{
+        } else{
             //HEALTH
             int health = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-health", 0.0, false)) *
                     (plugin.getSkillLevel(hero, skill) - 1));
