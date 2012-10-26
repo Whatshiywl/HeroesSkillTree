@@ -93,7 +93,7 @@ public class EventListener implements Listener {
             event.getPlayer().sendMessage(ChatColor.RED + "This skill is still locked! /skillup (skill) to unlock it.");
             event.getHero().hasEffect(event.getSkill().getName());
             event.setCancelled(true);
-        } else{
+        } else {
             //HEALTH
             int health = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-health", 0.0, false)) *
                     (plugin.getSkillLevel(hero, skill) - 1));

@@ -20,6 +20,7 @@ import me.Whatshiywl.heroesskilltree.commands.SkillLockedCommand;
 import me.Whatshiywl.heroesskilltree.commands.SkillUpCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -214,7 +215,8 @@ public class HeroesSkillTree extends JavaPlugin {
 
     public int getPlayerPoints(Hero hero){
         //return getPlayerClassConfig(hero.getPlayer()).getInt(hero.getHeroClass().getName());
-        if (playerClasses.get(hero.getPlayer().getName()).get(hero.getHeroClass().getName()) == null) {
+        if (playerClasses.get(hero.getPlayer().getName()) == null ||
+            playerClasses.get(hero.getPlayer().getName()).get(hero.getHeroClass().getName()) == null) {
             return 0;
         }
         return playerClasses.get(hero.getPlayer().getName()).get(hero.getHeroClass().getName());
@@ -268,9 +270,9 @@ public class HeroesSkillTree extends JavaPlugin {
     }
 
     public int getSkillMaxLevel(Hero hero, Skill skill) {
-        return SkillConfigManager.getSetting(hero.getHeroClass(), skill, "max-level", -1) == -1 ?
-                SkillConfigManager.getUseSetting(hero, skill, "max-level", -1, false) :
-                SkillConfigManager.getSetting(hero.getHeroClass(), skill, "max-level", -1);
+        return SkillConfigManager.getSetting(hero.getHeroClass(), skill, "master-level", -1) == -1 ?
+                SkillConfigManager.getUseSetting(hero, skill, "master-level", -1, false) :
+                SkillConfigManager.getSetting(hero.getHeroClass(), skill, "master-level", -1);
     }
 
     public List<String> getStrongParentSkills(Hero hero, Skill skill){
@@ -291,12 +293,13 @@ public class HeroesSkillTree extends JavaPlugin {
     }
 
     public boolean isLocked(Hero hero, Skill skill) {
-        if(skill != null && hero.hasAccessToSkill(skill)) {
-            boolean skillLevel = getSkillLevel(hero, skill) < getSkillMaxLevel(hero, skill);
+        if(skill != null && hero.canUseSkill(skill)) {
+            boolean skillLevel = getSkillLevel(hero, skill) < 1;
             List<String> strongParents = getStrongParentSkills(hero, skill);
             boolean hasStrongParents = strongParents != null && !strongParents.isEmpty();
             List<String> weakParents = getWeakParentSkills(hero, skill);
             boolean hasWeakParents = weakParents != null && !weakParents.isEmpty();
+            String message = skill.getName() + ": " + skillLevel + "," + hasStrongParents + ":" + hasWeakParents;
             return skillLevel && (hasStrongParents || hasWeakParents);
         }
         return true;
@@ -383,12 +386,12 @@ public class HeroesSkillTree extends JavaPlugin {
             Hero hero = heroes.getCharacterManager().getHero(player);
             if (hero.getLevel(hero.getHeroClass()) > 1 &&
                     playerClasses.get(name).get(hero.getHeroClass().getName()) < 1) {
-                int points = 0;
+                int points = hero.getLevel(hero.getHeroClass()) - 1;
                 for (String skillName : playerSkills.get(name).get(hero.getHeroClass().getName()).keySet()) {
-                    points += playerSkills.get(name).get(hero.getHeroClass().getName()).get(skillName);
+                    points -= playerSkills.get(name).get(hero.getHeroClass().getName()).get(skillName);
                 }
-                if (points < hero.getLevel(hero.getHeroClass()) - 1) {
-                    playerClasses.get(name).put(hero.getHeroClass().getName(), points - hero.getLevel(hero.getHeroClass()) - 1);
+                if (points > 0) {
+                    playerClasses.get(name).put(hero.getHeroClass().getName(), points);
                 }
             }
         } catch (Exception e) {
@@ -416,6 +419,11 @@ public class HeroesSkillTree extends JavaPlugin {
     
     public void savePlayerConfig(String s) {
         FileConfiguration playerConfig = new YamlConfiguration();
+        File playerDataFolder = new File(getDataFolder(), "data");
+        if (!playerDataFolder.exists()) {
+            playerDataFolder.mkdir();
+        }
+        
         File playerFile = new File(getDataFolder() + "/data", s + ".yml");
         if (!playerFile.exists()) {
             try {
@@ -423,6 +431,7 @@ public class HeroesSkillTree extends JavaPlugin {
             } catch (IOException ioe) {
                 String message = "[HeroesSkillTree] failed to save " + s + ".yml";
                 logger.severe(message);
+                return;
             }
         }
         try {
