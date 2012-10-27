@@ -147,4 +147,27 @@ public class EventListener implements Listener {
             }
         }
     }
+
+    @EventHandler(priority = EventPriority.HIGHEST)
+    public void onEntityDamage (EntityDamageEvent event) {
+        EntityDamageByEntityEvent eventdbe = (EntityDamageByEntityEvent) event;
+        if (eventdbe.getDamager() instanceof Player) {
+            Player player = (Player) eventdbe.getDamager();
+            Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero(player);
+            for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
+                if(plugin.isLocked(hero, skill)) {
+                    if(hero.hasEffect(skill.getName())){
+                        hero.removeEffect(hero.getEffect(skill.getName()));
+                        }
+                        else if(hero.hasEffect(skill.getName())){
+                        //DAMAGE
+                        int damage = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-damage", 0.0, false)) *
+                        (plugin.getSkillLevel(hero, skill) - 1));
+                        damage = damage > 0 ? damage : 0;
+                        event.setDamage(event.getDamage() + damage);
+                    }
+                }
+            }
+        }
+    }
 }
