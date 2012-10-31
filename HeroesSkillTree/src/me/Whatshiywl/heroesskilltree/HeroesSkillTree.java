@@ -44,9 +44,7 @@ public class HeroesSkillTree extends JavaPlugin {
     private HashMap<String,HashMap<String,HashMap<String, Integer>>> playerSkills = new HashMap<>();
     private HashMap<String,HashMap<String, Integer>> playerClasses = new HashMap<>();
     private int pointsPerLevel = 1;
-
-    private FileConfiguration heroesClassConfig = null;
-    private File heroesClassConfigFile = null;
+    private HashMap<String, FileConfiguration> hConfigs = new HashMap<>();
 
     @Override
     public void onDisable() {
@@ -418,16 +416,34 @@ public class HeroesSkillTree extends JavaPlugin {
         }
     }
 
-    public void reloadHeroesClassConfig(HeroClass HClass) {
-        heroesClassConfigFile = new File(heroes.getDataFolder() + "/classes", HClass.getName() + ".yml");
+    /*public void reloadHeroesClassConfig(HeroClass hClass) {
+        heroesClassConfigFile = new File(heroes.getDataFolder() + "/classes", hClass.getName() + ".yml");
+        
         heroesClassConfig = YamlConfiguration.loadConfiguration(heroesClassConfigFile);
-    }
+    }*/
 
-    public FileConfiguration getHeroesClassConfig(HeroClass HClass) {
-        if (heroesClassConfig == null || !heroesClassConfig.getString("name").equals(HClass.getName())) {
-            this.reloadHeroesClassConfig(HClass);
+    public FileConfiguration getHeroesClassConfig(HeroClass hClass) {
+        if (hConfigs.containsKey(hClass.getName())) {
+            return hConfigs.get(hClass.getName());
         }
-        return heroesClassConfig;
+        File classFolder = new File(heroes.getDataFolder(), "classes");
+        for (File f : classFolder.listFiles()) {
+            FileConfiguration config = new YamlConfiguration();
+            try {
+                config.load(f);
+                if (config.getString("name").equalsIgnoreCase(hClass.getName())) {
+                    hConfigs.put(hClass.getName(), config);
+                    return config;
+                }
+            } catch (Exception e) {
+                continue;
+            }
+        }
+        return null;
+        /*if (heroesClassConfig == null || !heroesClassConfig.getString("name").equals(hClass.getName())) {
+            this.reloadHeroesClassConfig(hClass);
+        }
+        return heroesClassConfig;*/
     }
     
     private void saveAll() {
