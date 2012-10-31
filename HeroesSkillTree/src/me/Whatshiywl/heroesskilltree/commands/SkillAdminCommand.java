@@ -69,7 +69,7 @@ public class SkillAdminCommand {
             return;
         } 
         
-        if(args.length > 1) {
+        if(args.length < 2) {
             sender.sendMessage(ChatColor.RED + "/skilladmin (set/give/remove/clear/reset)");
             return;
         }
