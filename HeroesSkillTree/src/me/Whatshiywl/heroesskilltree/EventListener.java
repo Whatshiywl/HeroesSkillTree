@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 import com.herocraftonline.heroes.api.events.*;
 import com.herocraftonline.heroes.characters.Hero;
+import com.herocraftonline.heroes.characters.effects.Effect;
 import com.herocraftonline.heroes.characters.skill.Skill;
 import com.herocraftonline.heroes.characters.skill.SkillConfigManager;
 import org.bukkit.Bukkit;
@@ -53,16 +54,33 @@ public class EventListener implements Listener {
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onLevelChangeEvent(HeroChangeLevelEvent event) {
-        Hero hero = event.getHero();
+        final Hero hero = event.getHero();
         plugin.setPlayerPoints(hero, plugin.getPlayerPoints(hero) +
                 ((event.getTo() - event.getFrom()) * plugin.getPointsPerLevel()));
         hero.getPlayer().sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "SkillPoints: " + plugin.getPlayerPoints(hero));
         plugin.savePlayerConfig(hero.getPlayer().getName());
-        for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
+        
+        
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                for (Effect effect : hero.getEffects()) {
+                    Skill skill = HeroesSkillTree.heroes.getSkillManager().getSkill(effect.getName());
+                    if (skill == null) {
+                        continue;
+                    }
+                    if (plugin.isLocked(hero, skill)) {
+                        hero.removeEffect(effect);
+                    }
+                }
+            }
+        });
+        
+        /*for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
             if (plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())) {
                 hero.removeEffect(hero.getEffect(skill.getName()));
             }
-        }
+        }*/
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -70,7 +88,7 @@ public class EventListener implements Listener {
         /*if(event.getTo() == null) {
             return;
         }*/
-        Hero hero = event.getHero();
+        final Hero hero = event.getHero();
         if(event.getTo().isDefault()) {
             boolean reset = false;
             //TODO get player's hero data file and find if it is reset
@@ -84,12 +102,27 @@ public class EventListener implements Listener {
             
         }*/
         //TODO change this to actually store skills per classes
-        plugin.resetPlayer(hero.getPlayer());
+        /*plugin.resetPlayer(hero.getPlayer());
         for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
             if(plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())){
                 hero.removeEffect(hero.getEffect(skill.getName()));
             }
-        }
+        }*/
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                for (Effect effect : hero.getEffects()) {
+                    Skill skill = HeroesSkillTree.heroes.getSkillManager().getSkill(effect.getName());
+                    if (skill == null) {
+                        continue;
+                    }
+                    if (plugin.isLocked(hero, skill)) {
+                        hero.removeEffect(effect);
+                    }
+                }
+            }
+        });
+        
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
@@ -100,41 +133,40 @@ public class EventListener implements Listener {
             event.getPlayer().sendMessage(ChatColor.RED + "This skill is still locked! /skillup (skill) to unlock it.");
             event.getHero().hasEffect(event.getSkill().getName());
             event.setCancelled(true);
-        } else {
-            //HEALTH
-            int health = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-health", 0.0, false)) *
-                    (plugin.getSkillLevel(hero, skill) - 1));
-            health = health > 0 ? health : 0;
-            event.setHealthCost(event.getHealthCost() + health);
-
-            //MANA
-            int mana = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-mana", 0.0, false)) *
-                    (plugin.getSkillLevel(hero, skill) - 1));
-            mana = mana > 0 ? mana : 0;
-            event.setManaCost(event.getManaCost() + mana);
-
-            //REAGENT
-            int reagent = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-reagent", 0.0, false)) *
-                    (plugin.getSkillLevel(hero, skill) - 1));
-            reagent = reagent > 0 ? reagent : 0;
-
-            ItemStack is = event.getReagentCost();
-            if(is != null) is.setAmount(event.getReagentCost().getAmount() + reagent);
-            event.setReagentCost(is);
-
-            //STAMINA
-            int stamina = (int) (SkillConfigManager.getUseSetting(hero, skill, "hst-stamina", 0.0, false) *
-                    plugin.getSkillLevel(hero, skill) - 1);
-            stamina = stamina > 0 ? stamina : 0;
-            event.setStaminaCost(event.getStaminaCost() + stamina);
+            return;
         }
+        //HEALTH
+        int health = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-health", 0.0, false)) *
+                (plugin.getSkillLevel(hero, skill) - 1));
+        health = health > 0 ? health : 0;
+        event.setHealthCost(event.getHealthCost() + health);
+
+        //MANA
+        int mana = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-mana", 0.0, false)) *
+                (plugin.getSkillLevel(hero, skill) - 1));
+        mana = mana > 0 ? mana : 0;
+        event.setManaCost(event.getManaCost() + mana);
+
+        //REAGENT
+        int reagent = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-reagent", 0.0, false)) *
+                (plugin.getSkillLevel(hero, skill) - 1));
+        reagent = reagent > 0 ? reagent : 0;
+
+        ItemStack is = event.getReagentCost();
+        if(is != null) {
+            is.setAmount(event.getReagentCost().getAmount() + reagent);
+        }
+        event.setReagentCost(is);
+
+        //STAMINA
+        int stamina = (int) (SkillConfigManager.getUseSetting(hero, skill, "hst-stamina", 0.0, false) *
+                plugin.getSkillLevel(hero, skill) - 1);
+        stamina = stamina > 0 ? stamina : 0;
+        event.setStaminaCost(event.getStaminaCost() + stamina);
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST)
+    /*@EventHandler(priority = EventPriority.HIGHEST)
     public void onWeaponDamage (WeaponDamageEvent event) {
-        /*if ((event.getDamager() == null) || (event.getDamager().getClass() != Hero.class)) {
-            return;
-        }*/
         if(!(event.getDamager() instanceof Hero)) {
             return;
         }
@@ -153,28 +185,5 @@ public class EventListener implements Listener {
                 }
             }
         }
-    }
-
-    @EventHandler(priority = EventPriority.HIGHEST)
-    public void onEntityDamage (EntityDamageEvent event) {
-        EntityDamageByEntityEvent eventdbe = (EntityDamageByEntityEvent) event;
-        if (eventdbe.getDamager() instanceof Player) {
-            Player player = (Player) eventdbe.getDamager();
-            Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero(player);
-            for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
-                if(plugin.isLocked(hero, skill)) {
-                    if(hero.hasEffect(skill.getName())){
-                        hero.removeEffect(hero.getEffect(skill.getName()));
-                        }
-                        else if(hero.hasEffect(skill.getName())){
-                        //DAMAGE
-                        int damage = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-damage", 0.0, false)) *
-                        (plugin.getSkillLevel(hero, skill) - 1));
-                        damage = damage > 0 ? damage : 0;
-                        event.setDamage(event.getDamage() + damage);
-                    }
-                }
-            }
-        }
-    }
+    }*/
 }
