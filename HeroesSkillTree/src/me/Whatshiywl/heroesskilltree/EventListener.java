@@ -87,9 +87,14 @@ public class EventListener implements Listener {
             return;
         }*/
         final Hero hero = event.getHero();
-        /*if(event.getTo().isDefault()) {
-            plugin.resetPlayer(hero.getPlayer());
-        } else {
+        if(event.getTo().isDefault()) {
+            boolean reset = false;
+            //TODO get player's hero data file and find if it is reset
+            if (reset) {
+                plugin.resetPlayer(hero.getPlayer());
+            }
+        }
+        /*else {
             plugin.recalcPlayer(hero.getPlayer(), event.getTo());
             plugin.savePlayerConfig(hero.getPlayer().getName());
             

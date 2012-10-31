@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 import me.Whatshiywl.heroesskilltree.commands.SkillAdminCommand;
 import me.Whatshiywl.heroesskilltree.commands.SkillDownCommand;
@@ -210,9 +211,27 @@ public class HeroesSkillTree extends JavaPlugin {
         String name = player.getName();
         playerSkills.put(name, new HashMap<String, HashMap<String, Integer>>());
         playerClasses.put(name, new HashMap<String, Integer>());
-        savePlayerConfig(name);
+        resetPlayerConfig(name);
     }
 
+    private void resetPlayerConfig(String name) {
+        File playerFolder = new File(getDataFolder(), "data");
+        if (!playerFolder.exists()) {
+            playerFolder.mkdir();
+        }
+        File playerFile = new File(playerFolder, name + ".yml");
+        if (playerFolder.exists() && !playerFolder.delete()) {
+            logger.log(Level.SEVERE, "[HeroesSkillTree] failed to delete " + name + ".yml");
+            return;
+        }
+        try {
+            playerFile.createNewFile();
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "[HeroesSkillTree] failed to create new " + name + ".yml");
+        }
+        return;
+    }
+    
     public int getPlayerPoints(Hero hero){
         //return getPlayerClassConfig(hero.getPlayer()).getInt(hero.getHeroClass().getName());
         if (playerClasses.get(hero.getPlayer().getName()) == null ||
