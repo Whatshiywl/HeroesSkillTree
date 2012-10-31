@@ -431,9 +431,12 @@ public class HeroesSkillTree extends JavaPlugin {
             FileConfiguration config = new YamlConfiguration();
             try {
                 config.load(f);
-                if (config.getString("name").equalsIgnoreCase(hClass.getName())) {
+                String currentClassName = config.getString("name");
+                if (currentClassName.equalsIgnoreCase(hClass.getName())) {
                     hConfigs.put(hClass.getName(), config);
                     return config;
+                } else if (!hConfigs.containsKey(currentClassName)) {
+                    hConfigs.put(currentClassName, config);
                 }
             } catch (Exception e) {
                 continue;
