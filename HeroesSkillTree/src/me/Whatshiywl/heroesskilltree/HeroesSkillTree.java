@@ -394,9 +394,8 @@ public class HeroesSkillTree extends JavaPlugin {
                     playerSkills.get(name).get(s).put(st, playerConfig.getInt(s + ".skills." + st, 0));
                 }
             }
-            
             //Check if the player has points that existed before HST was added to the server
-            Player player = Bukkit.getPlayer(name);
+            /*Player player = Bukkit.getPlayer(name);
             if (player == null) {
                 return;
             }
@@ -410,7 +409,7 @@ public class HeroesSkillTree extends JavaPlugin {
                 if (points > 0) {
                     playerClasses.get(name).put(hero.getHeroClass().getName(), points);
                 }
-            }
+            }*/
         } catch (Exception e) {
             logger.severe("[HeroesSkillTree] failed to load " + name + ".yml");
         }

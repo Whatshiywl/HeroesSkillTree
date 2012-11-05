@@ -15,8 +15,6 @@ import com.herocraftonline.heroes.characters.effects.Effect;
 import com.herocraftonline.heroes.characters.skill.Skill;
 import com.herocraftonline.heroes.characters.skill.SkillConfigManager;
 import org.bukkit.Bukkit;
-import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
 
@@ -43,13 +41,22 @@ public class EventListener implements Listener {
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event){
         Player player = event.getPlayer();
-        Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero(player);
+        final Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero(player);
         plugin.loadPlayerConfig(player.getName());
-        for (Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()) {
-            if (plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())) {
-                hero.removeEffect(hero.getEffect(skill.getName()));
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
+            @Override
+            public void run() {
+                for (Effect effect : hero.getEffects()) {
+                    Skill skill = HeroesSkillTree.heroes.getSkillManager().getSkill(effect.getName());
+                    if (skill == null) {
+                        continue;
+                    }
+                    if (plugin.isLocked(hero, skill)) {
+                        hero.removeEffect(effect);
+                    }
+                }
             }
-        }
+        }, 1L);
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
@@ -74,7 +81,7 @@ public class EventListener implements Listener {
                     }
                 }
             }
-        });
+        }, 1L);
         
         /*for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
             if (plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())) {
@@ -121,7 +128,7 @@ public class EventListener implements Listener {
                     }
                 }
             }
-        });
+        }, 1L);
         
     }
 
