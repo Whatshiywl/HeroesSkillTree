@@ -23,14 +23,14 @@ public class EventListener implements Listener {
     public EventListener(HeroesSkillTree instance) {
         EventListener.plugin = instance;
     }
-    
+
     @EventHandler
     public void onPluginEnable(PluginEnableEvent event) {
         if (event.getPlugin().getDescription().getName().equals("Heroes")) {
             HeroesSkillTree.heroes = (Heroes) event.getPlugin();
         }
     }
-    
+
     @EventHandler
     public void onPluginDisable(PluginDisableEvent event) {
         if (event.getPlugin().getDescription().getName().equals("Heroes")) {
@@ -43,6 +43,7 @@ public class EventListener implements Listener {
         Player player = event.getPlayer();
         final Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero(player);
         plugin.loadPlayerConfig(player.getName());
+        plugin.recalcPlayerPoints(hero, hero.getHeroClass());
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
@@ -66,8 +67,8 @@ public class EventListener implements Listener {
                 ((event.getTo() - event.getFrom()) * plugin.getPointsPerLevel()));
         hero.getPlayer().sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "SkillPoints: " + plugin.getPlayerPoints(hero));
         plugin.savePlayerConfig(hero.getPlayer().getName());
-        
-        
+
+
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
@@ -82,7 +83,7 @@ public class EventListener implements Listener {
                 }
             }
         }, 1L);
-        
+
         /*for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
             if (plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())) {
                 hero.removeEffect(hero.getEffect(skill.getName()));
@@ -103,10 +104,11 @@ public class EventListener implements Listener {
                 plugin.resetPlayer(hero.getPlayer());
             }
         }
+        plugin.recalcPlayerPoints(hero, event.getTo());
         /*else {
             plugin.recalcPlayer(hero.getPlayer(), event.getTo());
             plugin.savePlayerConfig(hero.getPlayer().getName());
-            
+
         }*/
         //TODO change this to actually store skills per classes
         /*plugin.resetPlayer(hero.getPlayer());
@@ -129,7 +131,7 @@ public class EventListener implements Listener {
                 }
             }
         }, 1L);
-        
+
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)

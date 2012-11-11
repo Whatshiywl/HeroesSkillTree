@@ -33,7 +33,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class HeroesSkillTree extends JavaPlugin {
 
     public final double VERSION = 0.1;
-    
+
     public static final Logger logger = Logger.getLogger("Minecraft");
     public final EventListener HEventListener = new EventListener(this);
 
@@ -65,7 +65,7 @@ public class HeroesSkillTree extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args){
-        
+
         //SKILLUP
         if (commandLabel.equalsIgnoreCase("skillup")) {
             SkillUpCommand.skillUp(this, sender, args);
@@ -91,7 +91,7 @@ public class HeroesSkillTree extends JavaPlugin {
                 return true;
             }
             Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero((Player) sender);
-            
+
             if(sender.hasPermission("skilltree.points")) {
                 sender.sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "You currently have " + getPlayerPoints(hero) + " SkillPoints.");
             } else {
@@ -105,19 +105,19 @@ public class HeroesSkillTree extends JavaPlugin {
             SkillAdminCommand.skillAdmin(this, sender, args);
             return true;
         }
-        
+
         //SKILLLIST
         if (commandLabel.equalsIgnoreCase("slist") || commandLabel.equalsIgnoreCase("sl")) {
             SkillListCommand.skillList(this, sender, args);
             return true;
         }
-        
+
         //SKILLUNLOCKABLE
         if (commandLabel.equalsIgnoreCase("unlocks") || commandLabel.equalsIgnoreCase("un")) {
             SkillLockedCommand.skillList(this, sender, args);
             return true;
         }
-        
+
         sender.sendMessage(ChatColor.GOLD + "HeroesSkillTree Help Page:");
         sender.sendMessage(ChatColor.GRAY + "/skillup <skill> [amount] (level up a skill)");
         sender.sendMessage(ChatColor.GRAY + "/skilldown <skill> [amount] (de-levels a skill)");
@@ -229,7 +229,7 @@ public class HeroesSkillTree extends JavaPlugin {
         }
         return;
     }
-    
+
     public int getPlayerPoints(Hero hero){
         //return getPlayerClassConfig(hero.getPlayer()).getInt(hero.getHeroClass().getName());
         if (playerClasses.get(hero.getPlayer().getName()) == null ||
@@ -239,13 +239,52 @@ public class HeroesSkillTree extends JavaPlugin {
         return playerClasses.get(hero.getPlayer().getName()).get(hero.getHeroClass().getName());
     }
 
+    public void recalcPlayerPoints(Hero hero, HeroClass hClass) {
+        String name = hero.getPlayer().getName();
+        String className = hClass.getName();
+        int points = hero.getLevel(hClass)*getPointsPerLevel();
+        if (playerClasses.get(name) == null) {
+            playerClasses.put(className, new HashMap<String,Integer>());
+        }
+        if(hero.getPlayer().hasPermission("skilltree.override.usepoints")){
+            playerClasses.get(name).put(className, points);
+            return;
+        }
+        if(playerClasses.get(name).get(className) == null) {
+            playerClasses.get(name).put(className, 0);
+            return;
+        }
+        if (playerSkills.get(name) == null) {
+            playerSkills.put(name, new HashMap<String, HashMap<String,Integer>>());
+            return;
+        }
+        if (playerSkills.get(name).get(className) == null) {
+            playerSkills.get(name).put(className, new HashMap<String,Integer>());
+            return;
+        }
+        outer: for(Skill skill : heroes.getSkillManager().getSkills()) {
+            String skillName = skill.getName();
+            if (playerSkills.get(name).get(className).get(skillName) == null) {
+                continue;
+            }
+            points -= playerSkills.get(name).get(className).get(skillName);
+            if(points < 0){
+                logger.warning("[HeroesSkillTree] " + name + "'s skills are at a too high level!");
+                points = 0;
+                continue outer;
+            }
+        }
+        playerClasses.get(name).put(className, points);
+        return;
+    }
+
     public void setPlayerPoints(Hero hero, int i) {
         if (playerClasses.get(hero.getPlayer().getName()) == null) {
             playerClasses.put(hero.getPlayer().getName(), new HashMap<String, Integer>());
         }
         playerClasses.get(hero.getPlayer().getName()).put(hero.getHeroClass().getName(), i);
     }
-    
+
     /*public void setPlayerPoints(Hero hero, int i){
         FileConfiguration playerConfig = getPlayerConfig(hero.getPlayer().getName());
         playerConfig.set("classes." + hero.getHeroClass().getName(), i);
@@ -299,7 +338,7 @@ public class HeroesSkillTree extends JavaPlugin {
     public List<String> getWeakParentSkills(Hero hero, Skill skill){
         return getParentSkills(hero, skill, "weak");
     }
-    
+
     public List<String> getParentSkills(Hero hero, Skill skill, String weakOrStrong) {
         FileConfiguration hCConfig = getHeroesClassConfig(hero.getHeroClass());
         if(hCConfig.getConfigurationSection("permitted-skills." + skill.getName() + ".parents") == null) {
@@ -417,7 +456,7 @@ public class HeroesSkillTree extends JavaPlugin {
 
     /*public void reloadHeroesClassConfig(HeroClass hClass) {
         heroesClassConfigFile = new File(heroes.getDataFolder() + "/classes", hClass.getName() + ".yml");
-        
+
         heroesClassConfig = YamlConfiguration.loadConfiguration(heroesClassConfigFile);
     }*/
 
@@ -447,20 +486,20 @@ public class HeroesSkillTree extends JavaPlugin {
         }
         return heroesClassConfig;*/
     }
-    
+
     private void saveAll() {
         for (String s : playerClasses.keySet()) {
             savePlayerConfig(s);
         }
     }
-    
+
     public void savePlayerConfig(String s) {
         FileConfiguration playerConfig = new YamlConfiguration();
         File playerDataFolder = new File(getDataFolder(), "data");
         if (!playerDataFolder.exists()) {
             playerDataFolder.mkdir();
         }
-        
+
         File playerFile = new File(getDataFolder() + "/data", s + ".yml");
         if (!playerFile.exists()) {
             try {
@@ -485,14 +524,14 @@ public class HeroesSkillTree extends JavaPlugin {
                     playerConfig.set(className + ".skills." + skillName, playerSkills.get(s).get(className).get(skillName));
                 }
             }
-            
+
             playerConfig.save(playerFile);
         } catch (Exception e) {
             String message = "[HeroesSkillTree] failed to save " + s + ".yml";
             logger.severe(message);
         }
     }
-    
+
     private void loadConfig() {
         File configFile = new File(getDataFolder(), "config.yml");
         if (!configFile.exists()) {
@@ -511,7 +550,7 @@ public class HeroesSkillTree extends JavaPlugin {
             logger.severe("[HeroesSkillTree] failed to load config.yml");
         }
     }
-    
+
     public int getPointsPerLevel() {
         return pointsPerLevel;
     }
