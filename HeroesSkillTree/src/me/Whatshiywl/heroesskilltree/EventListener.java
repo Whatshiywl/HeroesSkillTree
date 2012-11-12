@@ -11,6 +11,7 @@ import org.bukkit.inventory.ItemStack;
 
 import com.herocraftonline.heroes.api.events.*;
 import com.herocraftonline.heroes.characters.Hero;
+import com.herocraftonline.heroes.characters.classes.HeroClass;
 import com.herocraftonline.heroes.characters.effects.Effect;
 import com.herocraftonline.heroes.characters.skill.Skill;
 import com.herocraftonline.heroes.characters.skill.SkillConfigManager;
@@ -97,14 +98,7 @@ public class EventListener implements Listener {
             return;
         }*/
         final Hero hero = event.getHero();
-        if(event.getTo().isDefault()) {
-            boolean reset = false;
-            //TODO get player's hero data file and find if it is reset
-            if (reset) {
-                plugin.resetPlayer(hero.getPlayer());
-            }
-        }
-        plugin.recalcPlayerPoints(hero, event.getTo());
+        final ClassChangeEvent evt = event;
         /*else {
             plugin.recalcPlayer(hero.getPlayer(), event.getTo());
             plugin.savePlayerConfig(hero.getPlayer().getName());
@@ -120,6 +114,20 @@ public class EventListener implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
+                boolean reset = true;
+                if(evt.getTo().isDefault()) {
+                    outer: for(HeroClass hClass: HeroesSkillTree.heroes.getClassManager().getClasses()){
+                        if(hero.getExperience(hClass)!=0) {
+                            reset = false;
+                            continue outer;
+                        }
+                    }
+                }
+                if(reset){
+                    plugin.resetPlayer(hero.getPlayer());
+                } else {
+                    plugin.recalcPlayerPoints(hero, evt.getTo());
+                }
                 for (Effect effect : hero.getEffects()) {
                     Skill skill = HeroesSkillTree.heroes.getSkillManager().getSkill(effect.getName());
                     if (skill == null) {
@@ -131,7 +139,6 @@ public class EventListener implements Listener {
                 }
             }
         }, 1L);
-
     }
 
     @EventHandler(priority = EventPriority.HIGHEST)
