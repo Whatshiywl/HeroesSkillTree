@@ -119,7 +119,7 @@ public class EventListener implements Listener {
                     outer: for(HeroClass hClass: HeroesSkillTree.heroes.getClassManager().getClasses()){
                         if(hero.getExperience(hClass)!=0) {
                             reset = false;
-                            continue outer;
+                            break outer;
                         }
                     }
                 }
