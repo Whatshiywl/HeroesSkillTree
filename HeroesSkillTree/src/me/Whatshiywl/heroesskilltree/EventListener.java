@@ -64,11 +64,11 @@ public class EventListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onLevelChangeEvent(HeroChangeLevelEvent event) {
         final Hero hero = event.getHero();
-        plugin.setPlayerPoints(hero, plugin.getPlayerPoints(hero) +
-                ((event.getTo() - event.getFrom()) * plugin.getPointsPerLevel()));
-        hero.getPlayer().sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "SkillPoints: " + plugin.getPlayerPoints(hero));
+        plugin.setPlayerPoints(hero, event.getHeroClass(),
+                plugin.getPlayerPoints(hero) + ((event.getTo() - event.getFrom()) * plugin.getPointsPerLevel()));
         plugin.savePlayerConfig(hero.getPlayer().getName());
-
+        if(hero.getHeroClass() != event.getHeroClass()) return;
+        hero.getPlayer().sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "SkillPoints: " + plugin.getPlayerPoints(hero));
 
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
@@ -84,7 +84,6 @@ public class EventListener implements Listener {
                 }
             }
         }, 1L);
-
         /*for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
             if (plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())) {
                 hero.removeEffect(hero.getEffect(skill.getName()));
@@ -114,8 +113,9 @@ public class EventListener implements Listener {
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
-                boolean reset = true;
+                boolean reset = false;
                 if(evt.getTo().isDefault()) {
+                    reset = true;
                     outer: for(HeroClass hClass: HeroesSkillTree.heroes.getClassManager().getClasses()){
                         if(hero.getExperience(hClass)!=0) {
                             reset = false;

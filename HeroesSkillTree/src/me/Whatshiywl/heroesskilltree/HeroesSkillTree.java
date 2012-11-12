@@ -32,7 +32,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class HeroesSkillTree extends JavaPlugin {
 
-    public final double VERSION = 0.1;
+    public final double VERSION = 1.5;
 
     public static final Logger logger = Logger.getLogger("Minecraft");
     public final EventListener HEventListener = new EventListener(this);
@@ -49,18 +49,23 @@ public class HeroesSkillTree extends JavaPlugin {
     @Override
     public void onDisable() {
         saveAll();
-        logger.info("[HeroesSkillLevel] Has Been Disabled!");
+        logger.info("[HeroesSkillTree] Has Been Disabled!");
     }
 
     @Override
     public void onEnable() {
-        String message = "[HeroesSkillLevel] Version " + VERSION + " Has Been Enabled!";
+        String message = "[HeroesSkillTree] Version " + VERSION + "-Beta Has Been Enabled!";
         logger.info(message);
         PluginManager pm = getServer().getPluginManager();
         getConfig().options().copyDefaults(true);
         saveConfig();
         loadConfig();
         pm.registerEvents(HEventListener, this);
+
+        for(Player player : Bukkit.getServer().getOnlinePlayers()){
+            Hero hero = heroes.getCharacterManager().getHero(player);
+            recalcPlayerPoints(hero, hero.getHeroClass());
+        }
     }
 
     @Override
@@ -244,7 +249,7 @@ public class HeroesSkillTree extends JavaPlugin {
         String className = hClass.getName();
         int points = hero.getLevel(hClass)*getPointsPerLevel();
         if (playerClasses.get(name) == null) {
-            playerClasses.put(className, new HashMap<String,Integer>());
+            playerClasses.put(name, new HashMap<String,Integer>());
         }
         if(hero.getPlayer().hasPermission("skilltree.override.usepoints")){
             playerClasses.get(name).put(className, points);
@@ -283,6 +288,13 @@ public class HeroesSkillTree extends JavaPlugin {
             playerClasses.put(hero.getPlayer().getName(), new HashMap<String, Integer>());
         }
         playerClasses.get(hero.getPlayer().getName()).put(hero.getHeroClass().getName(), i);
+    }
+
+    public void setPlayerPoints(Hero hero, HeroClass hClass, int i) {
+        if (playerClasses.get(hero.getPlayer().getName()) == null) {
+            playerClasses.put(hero.getPlayer().getName(), new HashMap<String, Integer>());
+        }
+        playerClasses.get(hero.getPlayer().getName()).put(hClass.getName(), i);
     }
 
     /*public void setPlayerPoints(Hero hero, int i){
