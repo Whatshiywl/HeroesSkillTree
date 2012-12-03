@@ -21,7 +21,7 @@ public class SkillListCommand {
             return;
         }
         Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero((Player) sender);
-        
+
         int j=0;
         HashMap<String, Skill> skills = new HashMap<>();
         ArrayList<String> alphabeticalSkills = new ArrayList<>();
@@ -65,7 +65,14 @@ public class SkillListCommand {
                 break;
             }
             String name = alphabeticalSkills.get(i);
-            sender.sendMessage(ChatColor.GREEN + name + ": " + ChatColor.GRAY + skills.get(name).getDescription(hero));
+            int maxlevel = hst.getSkillMaxLevel(hero, skills.get(name));
+            if(maxlevel >= 0){
+                int level = hst.getSkillLevel(hero, skills.get(name));
+                sender.sendMessage(ChatColor.GREEN + name + " (" + level + "/" + maxlevel + "): " +
+                                    ChatColor.GRAY + skills.get(name).getDescription(hero));
+            } else {
+                sender.sendMessage(ChatColor.GREEN + name + ": " + ChatColor.GRAY + skills.get(name).getDescription(hero));
+            }
             j++;
         }
     }

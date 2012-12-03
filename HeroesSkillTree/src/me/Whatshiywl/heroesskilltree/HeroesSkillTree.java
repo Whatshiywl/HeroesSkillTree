@@ -32,7 +32,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class HeroesSkillTree extends JavaPlugin {
 
-    public final double VERSION = 1.5;
+    //version = 1.5.1-b
+    public final int VERSION = 1;
+    public final double SUBVERSION = 5.1;
 
     public static final Logger logger = Logger.getLogger("Minecraft");
     public final EventListener HEventListener = new EventListener(this);
@@ -54,7 +56,7 @@ public class HeroesSkillTree extends JavaPlugin {
 
     @Override
     public void onEnable() {
-        String message = "[HeroesSkillTree] Version " + VERSION + "-Beta Has Been Enabled!";
+        String message = "[HeroesSkillTree] Version " + VERSION + "." + SUBVERSION + "-Beta Has Been Enabled!";
         logger.info(message);
         PluginManager pm = getServer().getPluginManager();
         getConfig().options().copyDefaults(true);
