@@ -62,7 +62,7 @@ public class SkillUpCommand {
         }
         
         //Point Check
-        if(hst.getPlayerPoints(hero) < pointsToIncrease) {
+        if(hst.getPlayerPoints(hero) < pointsToIncrease && !sender.hasPermission("skilltree.override.usepoints")) {
             sender.sendMessage(ChatColor.RED + "You don't have enough SkillPoints.");
             return;
         }
@@ -77,11 +77,6 @@ public class SkillUpCommand {
         if (hst.isLocked(hero, skill) && !hst.canUnlock(hero, skill)) {
             sender.sendMessage(ChatColor.RED + "You can't unlock this skill! /skillinfo (skill) to see requirements.");
             return;
-        }
-        
-        //Override Check
-        if (!sender.hasPermission("skilltree.override.usepoints")) {
-            hst.setPlayerPoints(hero, hst.getPlayerPoints(hero) - pointsToIncrease);
         }
         
         hst.setSkillLevel(hero, skill, hst.getSkillLevel(hero, skill) + pointsToIncrease);

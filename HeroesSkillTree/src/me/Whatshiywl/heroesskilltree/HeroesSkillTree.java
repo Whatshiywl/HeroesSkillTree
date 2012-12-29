@@ -9,7 +9,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,7 +20,6 @@ import me.Whatshiywl.heroesskilltree.commands.SkillLockedCommand;
 import me.Whatshiywl.heroesskilltree.commands.SkillUpCommand;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -44,7 +42,6 @@ public class HeroesSkillTree extends JavaPlugin {
     public List<Skill> SkillStrongParents = new ArrayList<>();
     public List<Skill> SkillWeakParents = new ArrayList<>();
     private HashMap<String,HashMap<String,HashMap<String, Integer>>> playerSkills = new HashMap<>();
-    private HashMap<String,HashMap<String, Integer>> playerClasses = new HashMap<>();
     private int pointsPerLevel = 1;
     private HashMap<String, FileConfiguration> hConfigs = new HashMap<>();
 
@@ -63,10 +60,9 @@ public class HeroesSkillTree extends JavaPlugin {
         saveConfig();
         loadConfig();
         pm.registerEvents(HEventListener, this);
-
-        for(Player player : Bukkit.getServer().getOnlinePlayers()){
-            Hero hero = heroes.getCharacterManager().getHero(player);
-            recalcPlayerPoints(hero, hero.getHeroClass());
+        
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            loadPlayerConfig(p.getName());
         }
     }
 
@@ -135,87 +131,9 @@ public class HeroesSkillTree extends JavaPlugin {
         return true;
     }
 
-    /*public FileConfiguration loadPlayer(String name) {
-        //Creates new classes section
-        FileConfiguration playerConfig = getPlayerConfig(name);
-        if(!playerConfig.contains("classes")) {
-            playerConfig.createSection("classes");
-        }
-        //Creates new skills section
-        if(!playerConfig.contains("skills")) {
-            playerConfig.createSection("skills");
-        }
-        try {
-            playerConfig.save(new File(getDataFolder() + "/data", name + ".yml"));
-        } catch (Exception e) {
-            System.out.println("[HeroesSkillTree] failed to save " + name + ".yml");
-        }
-        return playerConfig;
-    }*/
-
-    /*public void recalcPlayer(Player player, HeroClass heroclass){
-        Hero hero = heroes.getCharacterManager().getHero(player);
-        //If /hero reset
-        if(heroclass.isDefault()) {
-            resetPlayer(player);
-        }
-        //If the player already has that class
-        else if(!(hero.getLevel(heroclass) > 0)){
-            //If the class hasn't been registered yet, register it!
-            if(!getPlayerClassConfig(player).contains(heroclass.getName())){
-                getPlayerClassConfig(player).createSection(heroclass.getName());
-                int i = 0;
-                for(Skill skill : heroes.getSkillManager().getSkills()) {
-                    if(heroclass.hasSkill(skill.getName())){
-                        i += getSkillLevel(hero, skill);
-                    }
-                }
-                if(hero.getLevel(heroclass) - 1 - i < 0) {
-                    getPlayerClassConfig(player).set(heroclass.getName(), 0);
-                }
-                else {
-                    getPlayerClassConfig(player).set(heroclass.getName(), hero.getLevel(heroclass) - 1 - i);
-                }
-            }
-        } else { //It's a new class
-            FileConfiguration playerConfig = getPlayerConfig(player.getName());
-            getPlayerClassConfig(player).createSection(heroclass.getName());
-            getPlayerClassConfig(player).set(heroclass.getName(), 0);
-            for(Skill skill : heroes.getSkillManager().getSkills()) {
-                if(heroclass.hasSkill(skill.getName()) &&
-                        !getPlayerSkillConfig(player).contains(skill.getName())) {
-                    playerConfig.set("skills." + skill.getName(), 0);
-                }
-            }
-            try {
-                playerConfig.save(new File(getDataFolder() + "/data", hero.getPlayer().getName() + ".yml"));
-            } catch (Exception e) {
-                System.out.println("[HeroesSkillTree] failed to save " + hero.getPlayer().getName() + ".yml");
-            }
-        }
-    }*/
-
-    /*public void savePlayer(Player player){
-        Hero hero = heroes.getCharacterManager().getHero(player);
-        setPlayerPoints(hero, getPlayerPoints(hero));
-        for(Skill skill : heroes.getSkillManager().getSkills()){
-            if(hero.hasAccessToSkill(skill) &&
-                    !getPlayerConfig(player.getName()).getConfigurationSection("skills").contains(skill.getName())){
-                    //Creates new skills to player's section
-                getPlayerSkillConfig(player).set(skill.getName(), 0);
-            }
-        }
-        try {
-            playerConfig.save(new File(getDataFolder() + "/data", hero.getPlayer().getName() + ".yml"));
-        } catch (Exception e) {
-            System.out.println("[HeroesSkillTree] failed to save " + hero.getPlayer().getName() + ".yml");
-        }
-    }*/
-
     public void resetPlayer(Player player){
         String name = player.getName();
         playerSkills.put(name, new HashMap<String, HashMap<String, Integer>>());
-        playerClasses.put(name, new HashMap<String, Integer>());
         resetPlayerConfig(name);
     }
 
@@ -225,7 +143,7 @@ public class HeroesSkillTree extends JavaPlugin {
             playerFolder.mkdir();
         }
         File playerFile = new File(playerFolder, name + ".yml");
-        if (playerFolder.exists() && !playerFolder.delete()) {
+        if (playerFile.exists() && !playerFile.delete()) {
             logger.log(Level.SEVERE, "[HeroesSkillTree] failed to delete " + name + ".yml");
             return;
         }
@@ -234,83 +152,33 @@ public class HeroesSkillTree extends JavaPlugin {
         } catch (IOException ex) {
             logger.log(Level.SEVERE, "[HeroesSkillTree] failed to create new " + name + ".yml");
         }
-        return;
     }
 
-    public int getPlayerPoints(Hero hero){
-        //return getPlayerClassConfig(hero.getPlayer()).getInt(hero.getHeroClass().getName());
-        if (playerClasses.get(hero.getPlayer().getName()) == null ||
-            playerClasses.get(hero.getPlayer().getName()).get(hero.getHeroClass().getName()) == null) {
+    /**
+     * Calculates the unspent points by looking at all of the spent points
+     * and comparing them to the hero's current level.
+     * @param hero hero to calculate
+     * @return points left to spend
+     */
+    public int getPlayerPoints(Hero hero) {
+        String playername = hero.getPlayer().getName();
+        String className = hero.getHeroClass().getName();
+        if (!playerSkills.containsKey(playername)) {
             return 0;
         }
-        return playerClasses.get(hero.getPlayer().getName()).get(hero.getHeroClass().getName());
+        if (playerSkills.get(playername).get(className) == null) {
+            return 0;
+        }
+        
+        int total = 0;
+        for (String skillName : playerSkills.get(playername).get(className).keySet()) {
+            Integer points = playerSkills.get(playername).get(className).get(skillName);
+            if (points != null && points > 0) {
+                total += points;
+            } 
+        }
+        return hero.getLevel() - total;
     }
-
-    public void recalcPlayerPoints(Hero hero, HeroClass hClass) {
-        String name = hero.getPlayer().getName();
-        String className = hClass.getName();
-        int points = hero.getLevel(hClass)*getPointsPerLevel();
-        if (playerClasses.get(name) == null) {
-            playerClasses.put(name, new HashMap<String,Integer>());
-        }
-        if(hero.getPlayer().hasPermission("skilltree.override.usepoints")){
-            playerClasses.get(name).put(className, points);
-            return;
-        }
-        if(playerClasses.get(name).get(className) == null) {
-            playerClasses.get(name).put(className, 0);
-            return;
-        }
-        if (playerSkills.get(name) == null) {
-            playerSkills.put(name, new HashMap<String, HashMap<String,Integer>>());
-            return;
-        }
-        if (playerSkills.get(name).get(className) == null) {
-            playerSkills.get(name).put(className, new HashMap<String,Integer>());
-            return;
-        }
-        outer: for(Skill skill : heroes.getSkillManager().getSkills()) {
-            String skillName = skill.getName();
-            if (playerSkills.get(name).get(className).get(skillName) == null) {
-                continue;
-            }
-            points -= playerSkills.get(name).get(className).get(skillName);
-            if(points < 0){
-                logger.warning("[HeroesSkillTree] " + name + "'s skills are at a too high level!");
-                points = 0;
-                continue outer;
-            }
-        }
-        playerClasses.get(name).put(className, points);
-        return;
-    }
-
-    public void setPlayerPoints(Hero hero, int i) {
-        if (playerClasses.get(hero.getPlayer().getName()) == null) {
-            playerClasses.put(hero.getPlayer().getName(), new HashMap<String, Integer>());
-        }
-        playerClasses.get(hero.getPlayer().getName()).put(hero.getHeroClass().getName(), i);
-    }
-
-    public void setPlayerPoints(Hero hero, HeroClass hClass, int i) {
-        if (playerClasses.get(hero.getPlayer().getName()) == null) {
-            playerClasses.put(hero.getPlayer().getName(), new HashMap<String, Integer>());
-        }
-        playerClasses.get(hero.getPlayer().getName()).put(hClass.getName(), i);
-    }
-
-    /*public void setPlayerPoints(Hero hero, int i){
-        FileConfiguration playerConfig = getPlayerConfig(hero.getPlayer().getName());
-        playerConfig.set("classes." + hero.getHeroClass().getName(), i);
-        if(getPlayerPoints(hero) < 0) {
-            getPlayerClassConfig(hero.getPlayer()).set(hero.getHeroClass().getName(), 0);
-        }
-        try {
-            playerConfig.save(new File(getDataFolder() + "/data", hero.getPlayer().getName() + ".yml"));
-        } catch (Exception e) {
-            System.out.println("[HeroesSkillTree] failed to save " + hero.getPlayer().getName() + ".yml");
-        }
-    }*/
 
     public int getSkillLevel(Hero hero, Skill skill){
         //return getPlayerSkillConfig(hero.getPlayer()).getInt(skill.getName());
@@ -323,13 +191,6 @@ public class HeroesSkillTree extends JavaPlugin {
     }
 
     public void setSkillLevel(Hero hero, Skill skill, int i) {
-        /*FileConfiguration playerConfig = getPlayerConfig(hero.getPlayer().getName());
-        playerConfig.set("skills." + skill.getName(), i);
-        try {
-            playerConfig.save(new File(getDataFolder() + "/data", hero.getPlayer().getName() + ".yml"));
-        } catch (Exception e) {
-            System.out.println("[HeroesSkillTree] failed to save " + hero.getPlayer().getName() + ".yml");
-        }*/
         if (playerSkills.get(hero.getPlayer().getName()) == null) {
             playerSkills.put(hero.getPlayer().getName(), new HashMap<String, HashMap<String, Integer>>());
         }
@@ -369,7 +230,7 @@ public class HeroesSkillTree extends JavaPlugin {
             boolean hasStrongParents = strongParents != null && !strongParents.isEmpty();
             List<String> weakParents = getWeakParentSkills(hero, skill);
             boolean hasWeakParents = weakParents != null && !weakParents.isEmpty();
-            String message = skill.getName() + ": " + skillLevel + "," + hasStrongParents + ":" + hasWeakParents;
+            //String message = skill.getName() + ": " + skillLevel + "," + hasStrongParents + ":" + hasWeakParents;
             return skillLevel && (hasStrongParents || hasWeakParents);
         }
         return true;
@@ -429,11 +290,7 @@ public class HeroesSkillTree extends JavaPlugin {
         }
         try {
             playerConfig.load(playerConfigFile);
-            if (!playerClasses.containsKey(name)) {
-                playerClasses.put(name, new HashMap<String, Integer>());
-            }
             for (String s : playerConfig.getKeys(false)) {
-                playerClasses.get(name).put(s, playerConfig.getInt(s + ".points", 0));
                 if (!playerSkills.containsKey(s)) {
                     playerSkills.put(name, new HashMap<String, HashMap<String, Integer>>());
                 }
@@ -447,32 +304,10 @@ public class HeroesSkillTree extends JavaPlugin {
                     playerSkills.get(name).get(s).put(st, playerConfig.getInt(s + ".skills." + st, 0));
                 }
             }
-            //Check if the player has points that existed before HST was added to the server
-            /*Player player = Bukkit.getPlayer(name);
-            if (player == null) {
-                return;
-            }
-            Hero hero = heroes.getCharacterManager().getHero(player);
-            if (hero.getLevel(hero.getHeroClass()) > 1 &&
-                    playerClasses.get(name).get(hero.getHeroClass().getName()) < 1) {
-                int points = hero.getLevel(hero.getHeroClass()) - 1;
-                for (String skillName : playerSkills.get(name).get(hero.getHeroClass().getName()).keySet()) {
-                    points -= playerSkills.get(name).get(hero.getHeroClass().getName()).get(skillName);
-                }
-                if (points > 0) {
-                    playerClasses.get(name).put(hero.getHeroClass().getName(), points);
-                }
-            }*/
         } catch (Exception e) {
             logger.severe("[HeroesSkillTree] failed to load " + name + ".yml");
         }
     }
-
-    /*public void reloadHeroesClassConfig(HeroClass hClass) {
-        heroesClassConfigFile = new File(heroes.getDataFolder() + "/classes", hClass.getName() + ".yml");
-
-        heroesClassConfig = YamlConfiguration.loadConfiguration(heroesClassConfigFile);
-    }*/
 
     public FileConfiguration getHeroesClassConfig(HeroClass hClass) {
         if (hConfigs.containsKey(hClass.getName())) {
@@ -495,14 +330,10 @@ public class HeroesSkillTree extends JavaPlugin {
             }
         }
         return null;
-        /*if (heroesClassConfig == null || !heroesClassConfig.getString("name").equals(hClass.getName())) {
-            this.reloadHeroesClassConfig(hClass);
-        }
-        return heroesClassConfig;*/
     }
 
     private void saveAll() {
-        for (String s : playerClasses.keySet()) {
+        for (String s : playerSkills.keySet()) {
             savePlayerConfig(s);
         }
     }
@@ -526,8 +357,8 @@ public class HeroesSkillTree extends JavaPlugin {
         }
         try {
             playerConfig.load(playerFile);
-            for (String className : playerClasses.get(s).keySet()) {
-                playerConfig.set(className + ".points", playerClasses.get(s).get(className));
+            for (String className : playerSkills.get(s).keySet()) {
+                playerConfig.set(className + ".points", playerSkills.get(s).get(className));
                 if (!playerSkills.containsKey(s)) {
                     continue;
                 }

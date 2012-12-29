@@ -52,9 +52,6 @@ public class SkillDownCommand {
                 sender.sendMessage(ChatColor.RED + "You don't have enough permissions!");
                 return;
             }
-            if(!sender.hasPermission("skilltree.override.usepoints")) {
-                hst.setPlayerPoints(hero, hst.getPlayerPoints(hero) + pointsDecrease);
-            }
             hst.setSkillLevel(hero, skill, hst.getSkillLevel(hero, skill) - pointsDecrease);
             hero.removeEffect(hero.getEffect(skill.getName()));
             hst.savePlayerConfig(sender.getName());
@@ -63,9 +60,6 @@ public class SkillDownCommand {
             if(!sender.hasPermission("skilltree.down")){
                 sender.sendMessage(ChatColor.RED + "You don't have enough permissions!");
                 return;
-            }
-            if(!sender.hasPermission("skilltree.override.usepoints")) {
-                hst.setPlayerPoints(hero, hst.getPlayerPoints(hero) + pointsDecrease);
             }
             hst.setSkillLevel(hero, skill, hst.getSkillLevel(hero, skill) - pointsDecrease);
             hst.savePlayerConfig(sender.getName());

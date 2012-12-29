@@ -15,6 +15,8 @@ import com.herocraftonline.heroes.characters.classes.HeroClass;
 import com.herocraftonline.heroes.characters.effects.Effect;
 import com.herocraftonline.heroes.characters.skill.Skill;
 import com.herocraftonline.heroes.characters.skill.SkillConfigManager;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import org.bukkit.Bukkit;
 import org.bukkit.event.server.PluginDisableEvent;
 import org.bukkit.event.server.PluginEnableEvent;
@@ -44,7 +46,6 @@ public class EventListener implements Listener {
         Player player = event.getPlayer();
         final Hero hero = HeroesSkillTree.heroes.getCharacterManager().getHero(player);
         plugin.loadPlayerConfig(player.getName());
-        plugin.recalcPlayerPoints(hero, hero.getHeroClass());
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
@@ -64,10 +65,9 @@ public class EventListener implements Listener {
     @EventHandler(priority = EventPriority.MONITOR)
     public void onLevelChangeEvent(HeroChangeLevelEvent event) {
         final Hero hero = event.getHero();
-        plugin.setPlayerPoints(hero, event.getHeroClass(),
-                plugin.getPlayerPoints(hero) + ((event.getTo() - event.getFrom()) * plugin.getPointsPerLevel()));
-        plugin.savePlayerConfig(hero.getPlayer().getName());
-        if(hero.getHeroClass() != event.getHeroClass()) return;
+        if(hero.getHeroClass() != event.getHeroClass()) {
+            return;
+        }
         hero.getPlayer().sendMessage(ChatColor.GOLD + "[HST] " + ChatColor.AQUA + "SkillPoints: " + plugin.getPlayerPoints(hero));
 
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
@@ -84,32 +84,12 @@ public class EventListener implements Listener {
                 }
             }
         }, 1L);
-        /*for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
-            if (plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())) {
-                hero.removeEffect(hero.getEffect(skill.getName()));
-            }
-        }*/
     }
 
     @EventHandler(priority = EventPriority.MONITOR)
     public void onClassChangeEvent(ClassChangeEvent event) {
-        /*if(event.getTo() == null) {
-            return;
-        }*/
         final Hero hero = event.getHero();
         final ClassChangeEvent evt = event;
-        /*else {
-            plugin.recalcPlayer(hero.getPlayer(), event.getTo());
-            plugin.savePlayerConfig(hero.getPlayer().getName());
-
-        }*/
-        //TODO change this to actually store skills per classes
-        /*plugin.resetPlayer(hero.getPlayer());
-        for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
-            if(plugin.isLocked(hero, skill) && hero.hasEffect(skill.getName())){
-                hero.removeEffect(hero.getEffect(skill.getName()));
-            }
-        }*/
         Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, new Runnable() {
             @Override
             public void run() {
@@ -123,10 +103,8 @@ public class EventListener implements Listener {
                         }
                     }
                 }
-                if(reset){
+                if (reset) {
                     plugin.resetPlayer(hero.getPlayer());
-                } else {
-                    plugin.recalcPlayerPoints(hero, evt.getTo());
                 }
                 for (Effect effect : hero.getEffects()) {
                     Skill skill = HeroesSkillTree.heroes.getSkillManager().getSkill(effect.getName());
@@ -180,26 +158,4 @@ public class EventListener implements Listener {
         stamina = stamina > 0 ? stamina : 0;
         event.setStaminaCost(event.getStaminaCost() + stamina);
     }
-
-    /*@EventHandler(priority = EventPriority.HIGHEST)
-    public void onWeaponDamage (WeaponDamageEvent event) {
-        if(!(event.getDamager() instanceof Hero)) {
-            return;
-        }
-        Hero hero = (Hero) event.getDamager();
-        for(Skill skill : HeroesSkillTree.heroes.getSkillManager().getSkills()){
-            if(plugin.isLocked(hero, skill)) {
-                if(hero.hasEffect(skill.getName())){
-                    hero.removeEffect(hero.getEffect(skill.getName()));
-                    }
-                    else if(hero.hasEffect(skill.getName())){
-                    //DAMAGE
-                    int damage = (int) ((SkillConfigManager.getUseSetting(hero, skill, "hst-damage", 0.0, false)) *
-                    (plugin.getSkillLevel(hero, skill) - 1));
-                    damage = damage > 0 ? damage : 0;
-                    event.setDamage(event.getDamage() + damage);
-                }
-            }
-        }
-    }*/
 }
